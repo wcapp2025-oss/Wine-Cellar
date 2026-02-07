@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wine Inventory Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .tab-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .tab-btn.active {
+            background: white;
+            color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+        }
+
+        button:hover {
+            background: #5568d3;
+        }
+
+        .wine-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .wine-item {
+            background: #f9fafb;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .wine-item:hover {
+            border-color: #667eea;
+        }
+
+        .wine-name {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 5px;
+        }
+
+        .wine-details {
+            color: #6b7280;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .wine-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .wine-actions button {
+            width: auto;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+
+        .delete-btn {
+            background: #ef4444;
+        }
+
+        .delete-btn:hover {
+            background: #dc2626;
+        }
+
+        .consumed-btn {
+            background: #f59e0b;
+        }
+
+        .consumed-btn:hover {
+            background: #d97706;
+        }
+
+        .location-badge {
+            display: inline-block;
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #9ca3af;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #6b7280;
+            margin-top: 5px;
+        }
+
+        .location-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .location-item {
+            background: #f9fafb;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .location-item button {
+            width: auto;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🍷 Wine Inventory Tracker</h1>
+            <p class="subtitle">Snap, track, and savor your collection</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('inventory')">📦 Inventory</button>
+            <button class="tab-btn" onclick="showTab('locations')">📍 Manage Locations</button>
+        </div>
+
+        <!-- INVENTORY TAB -->
+        <div id="inventoryTab" class="tab-content active">
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalCount">0</div>
+                    <div class="stat-label">Total Bottles</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="consumedCount">0</div>
+                    <div class="stat-label">Consumed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="uniqueWines">0</div>
+                    <div class="stat-label">Unique Wines</div>
+                </div>
+            </div>
+
+            <div class="main-grid">
+                <div class="card">
+                    <h2>Add Wine</h2>
+                    <form id="wineForm">
+                        <div class="form-group">
+                            <label for="wineName">Wine Name *</label>
+                            <input type="text" id="wineName" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="vintage">Vintage (Year)</label>
+                            <input type="number" id="vintage" min="1900" max="2030">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="wineType">Type</label>
+                            <select id="wineType">
+                                <option value="">Select type...</option>
+                                <option value="Red">Red</option>
+                                <option value="White">White</option>
+                                <option value="Rosé">Rosé</option>
+                                <option value="Sparkling">Sparkling</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="location">Storage Location *</label>
+                            <select id="location" required>
+                                <option value="">Select location...</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="quantity">Quantity</label>
+                            <input type="number" id="quantity" min="1" value="1">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="notes">Notes</label>
+                            <textarea id="notes"></textarea>
+                        </div>
+
+                        <button type="submit">Add to Inventory</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h2>My Wine Collection</h2>
+                    <div id="wineList" class="wine-list">
+                        <div class="empty-state">
+                            <div style="font-size: 3em; margin-bottom: 10px;">🍾</div>
+                            <p>No wines in your collection yet.</p>
+                            <p>Add your first bottle to get started!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LOCATIONS TAB -->
+        <div id="locationsTab" class="tab-content">
+            <div class="card">
+                <h2>Manage Storage Locations</h2>
+                
+                <form id="locationForm" style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                    <h3 style="color: #667eea; margin-bottom: 15px;">Add New Location</h3>
+                    <div class="form-group">
+                        <label for="locationName">Location Name</label>
+                        <input type="text" id="locationName" required placeholder="e.g., Kitchen Fridge - Shelf 1">
+                    </div>
+                    <button type="submit">Add Location</button>
+                </form>
+
+                <h3 style="color: #667eea; margin-bottom: 15px;">Current Locations</h3>
+                <div id="locationsList" class="location-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple localStorage storage
+        let wines = [];
+        let consumedWines = [];
+        let locations = [];
+
+        // Load data on startup
+        function loadData() {
+            wines = JSON.parse(localStorage.getItem('wines') || '[]');
+            consumedWines = JSON.parse(localStorage.getItem('consumed') || '[]');
+            locations = JSON.parse(localStorage.getItem('locations') || '[]');
+            
+            // Add default locations if none exist
+            if (locations.length === 0) {
+                locations = [
+                    { id: '1', name: 'Fridge - Top Shelf' },
+                    { id: '2', name: 'Fridge - Middle Shelf' },
+                    { id: '3', name: 'Fridge - Bottom Shelf' },
+                    { id: '4', name: 'Wine Cellar' },
+                    { id: '5', name: 'Pre-order' }
+                ];
+                saveData();
+            }
+            
+            updateUI();
+        }
+
+        // Save data
+        function saveData() {
+            localStorage.setItem('wines', JSON.stringify(wines));
+            localStorage.setItem('consumed', JSON.stringify(consumedWines));
+            localStorage.setItem('locations', JSON.stringify(locations));
+        }
+
+        // Tab switching
+        function showTab(tabName) {
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Add active class to selected tab
+            if (tabName === 'inventory') {
+                document.querySelector('[onclick="showTab(\'inventory\')"]').classList.add('active');
+                document.getElementById('inventoryTab').classList.add('active');
+            } else if (tabName === 'locations') {
+                document.querySelector('[onclick="showTab(\'locations\')"]').classList.add('active');
+                document.getElementById('locationsTab').classList.add('active');
+            }
+        }
+
+        // Add wine form
+        document.getElementById('wineForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const wine = {
+                id: Date.now().toString(),
+                name: document.getElementById('wineName').value,
+                vintage: document.getElementById('vintage').value,
+                type: document.getElementById('wineType').value,
+                location: document.getElementById('location').value,
+                quantity: parseInt(document.getElementById('quantity').value) || 1,
+                notes: document.getElementById('notes').value,
+                dateAdded: new Date().toISOString()
+            };
+            
+            wines.push(wine);
+            saveData();
+            updateUI();
+            
+            // Reset form
+            document.getElementById('wineForm').reset();
+            document.getElementById('quantity').value = '1';
+            
+            alert('✓ Wine added successfully!');
+        });
+
+        // Add location form
+        document.getElementById('locationForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const location = {
+                id: Date.now().toString(),
+                name: document.getElementById('locationName').value
+            };
+            
+            locations.push(location);
+            saveData();
+            updateUI();
+            
+            document.getElementById('locationForm').reset();
+            alert('✓ Location added successfully!');
+        });
+
+        // Delete wine
+        function deleteWine(id) {
+            if (!confirm('Delete this wine?')) return;
+            wines = wines.filter(w => w.id !== id);
+            saveData();
+            updateUI();
+        }
+
+        // Mark as consumed
+        function markConsumed(id) {
+            const wine = wines.find(w => w.id === id);
+            if (!wine) return;
+            
+            const notes = prompt('Add tasting notes:', wine.notes || '');
+            if (notes === null) return;
+            
+            wine.consumedDate = new Date().toISOString();
+            wine.consumedNotes = notes;
+            consumedWines.push(wine);
+            wines = wines.filter(w => w.id !== id);
+            
+            saveData();
+            updateUI();
+        }
+
+        // Delete location
+        function deleteLocation(id) {
+            const location = locations.find(l => l.id === id);
+            if (!location) return;
+            
+            const winesWithLocation = wines.filter(w => w.location === location.name);
+            if (winesWithLocation.length > 0) {
+                alert(`Cannot delete "${location.name}" - ${winesWithLocation.length} wine(s) are stored there.`);
+                return;
+            }
+            
+            if (!confirm(`Delete "${location.name}"?`)) return;
+            
+            locations = locations.filter(l => l.id !== id);
+            saveData();
+            updateUI();
+        }
+
+        // Update all UI
+        function updateUI() {
+            updateStats();
+            renderWines();
+            renderLocations();
+            updateLocationDropdown();
+        }
+
+        // Update stats
+        function updateStats() {
+            const totalBottles = wines.reduce((sum, w) => sum + w.quantity, 0);
+            document.getElementById('totalCount').textContent = totalBottles;
+            document.getElementById('consumedCount').textContent = consumedWines.length;
+            
+            const uniqueNames = new Set(wines.map(w => w.name.toLowerCase()));
+            document.getElementById('uniqueWines').textContent = uniqueNames.size;
+        }
+
+        // Render wines
+        function renderWines() {
+            const container = document.getElementById('wineList');
+            
+            if (wines.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div style="font-size: 3em; margin-bottom: 10px;">🍾</div>
+                        <p>No wines in your collection yet.</p>
+                        <p>Add your first bottle to get started!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = wines.map(wine => `
+                <div class="wine-item">
+                    <div class="wine-name">${wine.name}</div>
+                    <div class="wine-details">
+                        ${wine.vintage ? `${wine.vintage} • ` : ''}
+                        ${wine.type ? `${wine.type} • ` : ''}
+                        ${wine.quantity > 1 ? `${wine.quantity} bottles` : '1 bottle'}
+                    </div>
+                    <span class="location-badge">${wine.location}</span>
+                    ${wine.notes ? `<div style="margin-top: 10px; font-size: 0.9em; color: #6b7280;">${wine.notes}</div>` : ''}
+                    <div class="wine-actions">
+                        <button class="consumed-btn" onclick="markConsumed('${wine.id}')">Consumed</button>
+                        <button class="delete-btn" onclick="deleteWine('${wine.id}')">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Render locations
+        function renderLocations() {
+            const container = document.getElementById('locationsList');
+            
+            if (locations.length === 0) {
+                container.innerHTML = '<div class="empty-state">No locations yet.</div>';
+                return;
+            }
+            
+            container.innerHTML = locations.map(loc => `
+                <div class="location-item">
+                    <div>${loc.name}</div>
+                    <button class="delete-btn" onclick="deleteLocation('${loc.id}')">Delete</button>
+                </div>
+            `).join('');
+        }
+
+        // Update location dropdown
+        function updateLocationDropdown() {
+            const select = document.getElementById('location');
+            select.innerHTML = '<option value="">Select location...</option>' +
+                locations.map(loc => `<option value="${loc.name}">${loc.name}</option>`).join('');
+        }
+
+        // Initialize
+        loadData();
+    </script>
+</body>
+</html>
