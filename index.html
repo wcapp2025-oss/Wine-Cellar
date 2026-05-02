@@ -1,0 +1,2800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wine Inventory Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #722f37 0%, #2d1b1e 100%);
+            min-height: 100vh;
+            padding: 15px;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            flex: 1 1 auto;
+            min-width: 120px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 8px;
+            }
+            
+            .container {
+                padding: 0;
+            }
+            
+            header {
+                margin-bottom: 12px;
+            }
+            
+            h1 {
+                font-size: 1.4em !important;
+            }
+            
+            h2 {
+                font-size: 1.1em !important;
+            }
+            
+            .subtitle {
+                font-size: 0.8em !important;
+            }
+            
+            .tabs {
+                gap: 4px;
+                margin-bottom: 12px;
+                flex-wrap: wrap;
+            }
+            
+            .tab-btn {
+                padding: 6px 8px;
+                font-size: 11px;
+                min-width: 70px;
+            }
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 8px;
+            }
+
+            .stat-number {
+                font-size: 1.3em;
+            }
+
+            .stat-label {
+                font-size: 0.8em;
+            }
+            
+            .card {
+                padding: 12px;
+                margin-bottom: 12px;
+            }
+            
+            .wine-item-compact {
+                padding: 6px 8px;
+                margin-bottom: 4px;
+            }
+            
+            .wine-photo {
+                width: 35px !important;
+                height: 35px !important;
+                font-size: 1.2em !important;
+            }
+            
+            .wine-name-compact {
+                font-size: 0.85em;
+            }
+            
+            .wine-details-compact {
+                font-size: 0.7em;
+            }
+            
+            .wine-actions-compact button {
+                padding: 3px 6px;
+                font-size: 0.65em;
+            }
+            
+            .dashboard-grid {
+                gap: 10px;
+            }
+            
+            .dashboard-box {
+                padding: 16px;
+                min-height: 100px;
+            }
+            
+            .dashboard-icon {
+                font-size: 36px;
+            }
+            
+            .dashboard-number {
+                font-size: 28px;
+            }
+            
+            .dashboard-label {
+                font-size: 13px;
+            }
+        }
+
+        .tab-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .tab-btn.active {
+            background: white;
+            color: #722f37;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        button {
+            background: linear-gradient(135deg, #722f37 0%, #8b3a44 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+            box-shadow: 0 4px 12px rgba(114, 47, 55, 0.3);
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(114, 47, 55, 0.4);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .wine-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .wine-item {
+            background: #f9fafb;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .wine-item:hover {
+            border-color: #667eea;
+        }
+
+        .wine-item-compact {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 10px 14px;
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s;
+        }
+
+        .wine-item-compact:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 6px rgba(102, 126, 234, 0.15);
+        }
+
+        .wine-item-compact .wine-photo {
+            width: 45px;
+            height: 45px;
+            object-fit: cover;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .wine-item-compact .wine-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .wine-item-compact .wine-name-compact {
+            font-size: 0.95em;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 2px;
+        }
+
+        .wine-item-compact .wine-details-compact {
+            font-size: 0.8em;
+            color: #6b7280;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .wine-item-compact .wine-actions-compact {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        .wine-item-compact button {
+            padding: 5px 10px;
+            font-size: 0.75em;
+            width: auto;
+        }
+
+        .wine-name {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 5px;
+        }
+
+        .wine-details {
+            color: #6b7280;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .wine-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .wine-actions button {
+            width: auto;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+
+        .delete-btn {
+            background: #ef4444;
+        }
+
+        .delete-btn:hover {
+            background: #dc2626;
+        }
+
+        .consumed-btn {
+            background: #f59e0b;
+        }
+
+        .consumed-btn:hover {
+            background: #d97706;
+        }
+
+        .location-badge {
+            display: inline-block;
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #9ca3af;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #6b7280;
+            margin-top: 5px;
+        }
+
+        .location-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .location-item {
+            background: #f9fafb;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .location-item button {
+            width: auto;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 1.2em;
+        }
+
+        .summary-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .summary-card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .summary-list {
+            display: grid;
+            gap: 8px;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: #f9fafb;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .summary-item:hover {
+            background: #e5e7eb;
+            transform: translateX(4px);
+        }
+
+        .summary-item-label {
+            font-weight: 500;
+            color: #1f2937;
+        }
+
+        .summary-item-count {
+            background: #722f37;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .dashboard-box {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            min-height: 140px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .dashboard-box:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+
+        .dashboard-box:active {
+            transform: translateY(-2px);
+        }
+
+        .dashboard-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .dashboard-number {
+            font-size: 36px;
+            font-weight: 700;
+            color: #722f37;
+            margin-bottom: 4px;
+        }
+
+        .dashboard-label {
+            font-size: 15px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .dashboard-add {
+            background: linear-gradient(135deg, #722f37 0%, #8b3a44 100%);
+            color: white;
+        }
+
+        .dashboard-add .dashboard-icon {
+            font-size: 56px;
+        }
+
+        .dashboard-add .dashboard-label {
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                gap: 12px;
+            }
+
+            .dashboard-box {
+                padding: 20px;
+                min-height: 120px;
+            }
+
+            .dashboard-icon {
+                font-size: 40px;
+            }
+
+            .dashboard-number {
+                font-size: 32px;
+            }
+
+            .dashboard-label {
+                font-size: 14px;
+            }
+
+            .dashboard-add .dashboard-icon {
+                font-size: 48px;
+            }
+
+            .dashboard-add .dashboard-label {
+                font-size: 16px;
+            }
+        }
+
+        .camera-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .camera-modal.active {
+            display: flex;
+        }
+
+        .camera-container {
+            position: relative;
+            max-width: 90%;
+            max-height: 90%;
+        }
+
+        #cameraVideo {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+
+        .camera-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+        }
+
+        .camera-controls button {
+            width: auto;
+            padding: 15px 30px;
+            font-size: 18px;
+        }
+
+        #captureBtn {
+            background: #10b981;
+        }
+
+        #closeCameraBtn {
+            background: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="mainApp" style="display: none;">
+        <header style="position: relative;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <div>
+                    <h1 style="margin: 0;">🍷 Wine Cellar</h1>
+                    <p class="subtitle" style="margin: 4px 0 0 0;">Track your collection</p>
+                </div>
+                <button onclick="handleLogout()" style="width: auto; padding: 8px 16px; background: rgba(255,255,255,0.3); font-size: 14px; white-space: nowrap;">
+                    Logout
+                </button>
+            </div>
+        </header>
+
+        <div class="tabs" style="margin-top: 15px;">
+            <button class="tab-btn active" id="dashboardBtn">🏠 Home</button>
+            <button class="tab-btn" id="addWineBtn">➕ Add</button>
+            <button class="tab-btn" id="inventoryBtn">📦 Wines</button>
+            <button class="tab-btn" id="consumedBtn">🍷 Consumed</button>
+            <button class="tab-btn" id="locationsBtn">📍 Locations</button>
+            <button class="tab-btn" id="friendsBtn">👥 Friends</button>
+        </div>
+
+        <!-- DASHBOARD TAB -->
+        <div id="dashboardTab" class="tab-content active">
+            <div class="card">
+                <h2 style="color: #722f37; margin-bottom: 20px;">Welcome to Your Wine Cellar</h2>
+                
+                <div class="dashboard-grid">
+                    <div class="dashboard-box" onclick="switchToTab('inventoryBtn', 'inventoryTab')">
+                        <div class="dashboard-icon">📦</div>
+                        <div class="dashboard-number" id="dashTotalBottles">0</div>
+                        <div class="dashboard-label">Total Bottles</div>
+                    </div>
+
+                    <div class="dashboard-box" onclick="switchToTab('consumedBtn', 'consumedTab')">
+                        <div class="dashboard-icon">🍷</div>
+                        <div class="dashboard-number" id="dashConsumedBottles">0</div>
+                        <div class="dashboard-label">Consumed</div>
+                    </div>
+
+                    <div class="dashboard-box" onclick="switchToTab('locationsBtn', 'locationsTab')">
+                        <div class="dashboard-icon">📍</div>
+                        <div class="dashboard-number" id="dashLocations">0</div>
+                        <div class="dashboard-label">Locations</div>
+                    </div>
+
+                    <div class="dashboard-box dashboard-add" onclick="switchToTab('addWineBtn', 'addWineTab')">
+                        <div class="dashboard-icon">➕</div>
+                        <div class="dashboard-label">Add Wine</div>
+                    </div>
+                </div>
+                
+                <!-- Summary Stats -->
+                <div style="margin-top: 30px;">
+                    <h3 style="color: #722f37; margin-bottom: 16px;">Collection Breakdown</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                        <div style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); padding: 16px; border-radius: 8px;">
+                            <div style="font-size: 2em; margin-bottom: 4px; font-weight: 700; color: #991b1b;" id="statRed">0</div>
+                            <div style="color: #7f1d1d; font-weight: 600;">Red Wines</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 16px; border-radius: 8px;">
+                            <div style="font-size: 2em; margin-bottom: 4px; font-weight: 700; color: #92400e;" id="statWhite">0</div>
+                            <div style="color: #78350f; font-weight: 600;">White Wines</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%); padding: 16px; border-radius: 8px;">
+                            <div style="font-size: 2em; margin-bottom: 4px; font-weight: 700; color: #9f1239;" id="statRose">0</div>
+                            <div style="color: #831843; font-weight: 600;">Rosé Wines</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100%); padding: 16px; border-radius: 8px;">
+                            <div style="font-size: 2em; margin-bottom: 4px; font-weight: 700; color: #5b21b6;" id="statSparkling">0</div>
+                            <div style="color: #4c1d95; font-weight: 600;">Sparkling</div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 16px;">
+                        <div style="background: #f9fafb; padding: 16px; border-radius: 8px; border: 2px solid #e5e7eb;">
+                            <div style="font-size: 1.5em; margin-bottom: 4px; font-weight: 700; color: #722f37;" id="statCountries">0</div>
+                            <div style="color: #6b7280; font-weight: 600;">Countries</div>
+                        </div>
+                        <div style="background: #f9fafb; padding: 16px; border-radius: 8px; border: 2px solid #e5e7eb;">
+                            <div style="font-size: 1.5em; margin-bottom: 4px; font-weight: 700; color: #722f37;" id="statRegions">0</div>
+                            <div style="color: #6b7280; font-weight: 600;">Regions</div>
+                        </div>
+                        <div style="background: #f9fafb; padding: 16px; border-radius: 8px; border: 2px solid #e5e7eb;">
+                            <div style="font-size: 1.5em; margin-bottom: 4px; font-weight: 700; color: #722f37;" id="statVintages">0</div>
+                            <div style="color: #6b7280; font-weight: 600;">Vintages</div>
+                        </div>
+                        <div style="background: #f9fafb; padding: 16px; border-radius: 8px; border: 2px solid #e5e7eb;">
+                            <div style="font-size: 1.5em; margin-bottom: 4px; font-weight: 700; color: #722f37;" id="statUniqueWines">0</div>
+                            <div style="color: #6b7280; font-weight: 600;">Unique Wines</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ADD WINE TAB -->
+        <div id="addWineTab" class="tab-content">
+            <div class="card">
+                <h2 style="color: #722f37;">Add New Wine</h2>
+                <form id="wineForm">
+                    <div class="form-group">
+                        <label>Wine Label Photo (Auto-analyzes)</label>
+                        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                            <button type="button" id="openCameraBtn" style="width: auto; flex: 1; background: #10b981;">📷 Camera</button>
+                            <label for="photoUpload" style="flex: 1; margin: 0;">
+                                <div style="background: #3b82f6; color: white; padding: 12px 24px; border-radius: 6px; text-align: center; cursor: pointer; font-weight: 600;">
+                                    📁 Upload
+                                </div>
+                            </label>
+                            <input type="file" id="photoUpload" accept="image/*" style="display: none;">
+                        </div>
+                        <img id="photoPreview" style="display: none; width: 100%; max-height: 200px; object-fit: contain; border-radius: 6px; margin-top: 10px;">
+                        <div id="analysisStatus" style="display: none; padding: 10px; background: #dbeafe; border-radius: 6px; margin-top: 10px; color: #1e40af; font-size: 0.9em;"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="wineName">Wine Name *</label>
+                        <input type="text" id="wineName" list="wineNameList" required>
+                        <datalist id="wineNameList"></datalist>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="vintage">Vintage (Year)</label>
+                        <input type="number" id="vintage" min="1900" max="2030">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="wineType">Type</label>
+                        <select id="wineType">
+                            <option value="">Select type...</option>
+                            <option value="Red">Red</option>
+                            <option value="White">White</option>
+                            <option value="Rosé">Rosé</option>
+                            <option value="Sparkling">Sparkling</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="country">Country</label>
+                        <input type="text" id="country" list="countryList" placeholder="e.g., France, Italy, USA">
+                        <datalist id="countryList"></datalist>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="region">Region</label>
+                        <input type="text" id="region" list="regionList" placeholder="e.g., Bordeaux, Tuscany, Napa Valley">
+                        <datalist id="regionList"></datalist>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="subRegion">Sub-region</label>
+                        <input type="text" id="subRegion" list="subRegionList" placeholder="e.g., St-Émilion, Pauillac, Chianti Classico">
+                        <datalist id="subRegionList"></datalist>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="parentLocation">Main Location *</label>
+                        <select id="parentLocation" required>
+                            <option value="">Select main location...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="subLocation">Sub-location *</label>
+                        <select id="subLocation" required>
+                            <option value="">Select main location first...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="quantity">Quantity</label>
+                        <input type="number" id="quantity" min="1" value="1">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="notes">Notes</label>
+                        <textarea id="notes"></textarea>
+                    </div>
+
+                    <button type="submit" id="submitBtn">Add to Inventory</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- INVENTORY TAB -->
+        <div id="inventoryTab" class="tab-content">
+            <div class="card">
+                <h2 style="color: #722f37; margin-bottom: 20px;">My Wine Collection</h2>
+                
+                <!-- Search Box -->
+                <div style="margin-bottom: 16px;">
+                    <input type="text" id="searchBox" placeholder="🔍 Search wines by name, region, vintage..." 
+                        style="width: 100%; padding: 12px; border: 2px solid #722f37; border-radius: 8px; font-size: 15px;">
+                </div>
+                
+                <!-- Filters -->
+                <div style="background: #f9fafb; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px;">
+                        <div>
+                            <label style="display: block; font-size: 13px; color: #6b7280; margin-bottom: 4px; font-weight: 500;">Type</label>
+                            <select id="filterType" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
+                                <option value="">All Types</option>
+                                <option value="Red">Red</option>
+                                <option value="White">White</option>
+                                <option value="Rosé">Rosé</option>
+                                <option value="Sparkling">Sparkling</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 13px; color: #6b7280; margin-bottom: 4px; font-weight: 500;">Country</label>
+                            <select id="filterCountry" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
+                                <option value="">All Countries</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 13px; color: #6b7280; margin-bottom: 4px; font-weight: 500;">Region</label>
+                            <select id="filterRegion" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
+                                <option value="">All Regions</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 13px; color: #6b7280; margin-bottom: 4px; font-weight: 500;">Sub-region</label>
+                            <select id="filterSubRegion" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
+                                <option value="">All Sub-regions</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 13px; color: #6b7280; margin-bottom: 4px; font-weight: 500;">Vintage</label>
+                            <select id="filterVintage" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
+                                <option value="">All Vintages</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button onclick="clearFilters()" style="margin-top: 12px; width: auto; padding: 8px 16px; background: #6b7280; font-size: 14px;">Clear Filters</button>
+                </div>
+                
+                <div id="wineList" class="wine-list">
+                    <div class="loading">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vintage Detail Modal -->
+        <div id="vintageDetailModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; align-items: center; justify-content: center; padding: 20px;">
+            <div style="background: white; border-radius: 12px; max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto; position: relative;">
+                <div style="position: sticky; top: 0; background: white; padding: 20px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center;">
+                    <h3 id="vintageWineName" style="color: #722f37; margin: 0;"></h3>
+                    <button onclick="closeVintageDetail()" style="width: auto; padding: 8px 16px; background: #6b7280;">Back</button>
+                </div>
+                <div id="vintageDetailContent" style="padding: 20px;">
+                    <!-- Vintage list will be inserted here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Wine Detail Modal -->
+        <div id="wineDetailModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; align-items: center; justify-content: center; padding: 20px;">
+            <div style="background: white; border-radius: 12px; max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto; position: relative;">
+                <div style="position: sticky; top: 0; background: white; padding: 20px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center;">
+                    <h3 id="detailWineName" style="color: #722f37; margin: 0;"></h3>
+                    <button onclick="closeWineDetail()" style="width: auto; padding: 8px 16px; background: #6b7280;">Close</button>
+                </div>
+                <div id="wineDetailContent" style="padding: 20px;">
+                    <!-- Detail content will be inserted here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- LOCATIONS TAB -->
+        <div id="locationsTab" class="tab-content">
+            <div class="card">
+                <h2>Manage Storage Locations</h2>
+                
+                <form id="locationForm" style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                    <h3 style="color: #667eea; margin-bottom: 15px;">Add Location</h3>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                            <input type="radio" name="locationType" value="parent" id="parentLocationRadio" checked>
+                            <span>Main Location (e.g., Fridge 1, Wine Cellar)</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px;">
+                            <input type="radio" name="locationType" value="sub" id="subLocationRadio">
+                            <span>Sub-location (e.g., Top Shelf, Rack A)</span>
+                        </label>
+                    </div>
+
+                    <div id="parentLocationSelect" style="display: none; margin-bottom: 15px;">
+                        <div class="form-group">
+                            <label for="parentLocationDropdown">Parent Location</label>
+                            <select id="parentLocationDropdown"></select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="locationName">Location Name</label>
+                        <input type="text" id="locationName" required placeholder="e.g., Fridge 1 or Top Shelf">
+                    </div>
+                    <button type="submit" id="locationSubmitBtn">Add Location</button>
+                </form>
+
+                <h3 style="color: #667eea; margin-bottom: 15px;">Current Locations</h3>
+                <div id="locationsList" class="location-list">
+                    <div class="loading">Loading...</div>
+                </div>
+                
+                <!-- Data Cleanup Tool -->
+                <div style="margin-top: 30px; padding-top: 30px; border-top: 2px solid #e5e7eb;">
+                    <h3 style="color: #722f37; margin-bottom: 15px;">🧹 Data Cleanup Tool</h3>
+                    <p style="color: #6b7280; margin-bottom: 15px; font-size: 0.9em;">
+                        Fix duplicate entries caused by extra spaces or inconsistent capitalization
+                    </p>
+                    <button onclick="cleanupAllData()" style="width: auto; padding: 10px 20px; background: #10b981;">
+                        Clean Up My Data
+                    </button>
+                    <div id="cleanupResult" style="margin-top: 10px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONSUMED WINES TAB -->
+        <div id="consumedTab" class="tab-content">
+            <div class="card">
+                <h2>🍷 Consumed Wines History</h2>
+                <div id="consumedList" class="wine-list">
+                    <div class="empty-state">
+                        <div style="font-size: 3em; margin-bottom: 10px;">🥂</div>
+                        <p>No consumed wines yet.</p>
+                        <p>Mark a wine as consumed to see it here!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FRIENDS TAB -->
+        <div id="friendsTab" class="tab-content">
+            <div class="card" style="margin-bottom: 20px;">
+                <h2>👥 Friends</h2>
+                
+                <!-- Search for friends -->
+                <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                    <h3 style="color: #667eea; margin-bottom: 15px;">Add Friend</h3>
+                    <div class="form-group">
+                        <label for="friendEmail">Search by Email</label>
+                        <input type="email" id="friendEmail" placeholder="friend@example.com">
+                    </div>
+                    <button id="sendFriendRequestBtn" style="width: auto; padding: 10px 20px;">Send Friend Request</button>
+                    <div id="friendSearchResult" style="margin-top: 10px;"></div>
+                </div>
+
+                <!-- Friend Requests -->
+                <div id="friendRequestsSection" style="margin-bottom: 20px;">
+                    <h3 style="color: #667eea; margin-bottom: 15px;">Friend Requests</h3>
+                    <div id="friendRequestsList"></div>
+                </div>
+
+                <!-- Friends List -->
+                <h3 style="color: #667eea; margin-bottom: 15px;">My Friends</h3>
+                <div id="friendsList"></div>
+            </div>
+
+            <!-- View Friend's Collection -->
+            <div id="friendCollectionView" style="display: none;">
+                <button onclick="closeFriendCollection()" style="margin-bottom: 20px; width: auto; background: #6b7280;">← Back to Friends</button>
+                <div class="card">
+                    <h2 id="friendCollectionTitle"></h2>
+                    
+                    <div class="stats" style="margin-bottom: 20px;">
+                        <div class="stat-card">
+                            <div class="stat-number" id="friendTotalCount">0</div>
+                            <div class="stat-label">Total Bottles</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="friendConsumedCount">0</div>
+                            <div class="stat-label">Consumed</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="friendUniqueWines">0</div>
+                            <div class="stat-label">Unique Wines</div>
+                        </div>
+                    </div>
+
+                    <h3 style="color: #667eea; margin-bottom: 15px;">Wine Collection</h3>
+                    <div id="friendWinesList" class="wine-list"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Auth Modal -->
+    <div id="authModal" style="display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #722f37 0%, #2d1b1e 100%); z-index: 2000; justify-content: center; align-items: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+        <div style="background: #f9fafb; border-radius: 16px; padding: 48px; max-width: 420px; width: 90%; box-shadow: 0 25px 70px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1);">
+            <div style="text-align: center; margin-bottom: 36px;">
+                <div style="font-size: 56px; margin-bottom: 12px;">🍷</div>
+                <h2 style="color: #722f37; margin: 0 0 8px 0; font-size: 28px; font-weight: 700;">Wine Cellar</h2>
+                <p style="color: #6b7280; margin: 0; font-size: 15px;">Curate your collection with elegance</p>
+            </div>
+            
+            <div id="loginForm">
+                <div class="form-group">
+                    <label for="loginEmail" style="color: #4b5563; font-weight: 500; margin-bottom: 6px; display: block; font-size: 14px;">Email</label>
+                    <input type="email" id="loginEmail" required style="width: 100%; padding: 12px 16px; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 15px; transition: all 0.2s; box-sizing: border-box;" onfocus="this.style.borderColor='#722f37'; this.style.boxShadow='0 0 0 3px rgba(114, 47, 55, 0.1)'" onblur="this.style.borderColor='#d1d5db'; this.style.boxShadow='none'">
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword" style="color: #4b5563; font-weight: 500; margin-bottom: 6px; display: block; font-size: 14px;">Password</label>
+                    <input type="password" id="loginPassword" required style="width: 100%; padding: 12px 16px; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 15px; transition: all 0.2s; box-sizing: border-box;" onfocus="this.style.borderColor='#722f37'; this.style.boxShadow='0 0 0 3px rgba(114, 47, 55, 0.1)'" onblur="this.style.borderColor='#d1d5db'; this.style.boxShadow='none'">
+                </div>
+                <button id="loginBtn" style="width: 100%; margin: 24px 0 12px 0; background: linear-gradient(135deg, #722f37 0%, #8b3a44 100%); color: white; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 12px rgba(114, 47, 55, 0.3);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(114, 47, 55, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(114, 47, 55, 0.3)'">Sign In</button>
+                <p style="text-align: center; color: #6b7280; font-size: 14px; margin: 12px 0;">
+                    <a href="#" id="showForgotPassword" style="color: #722f37; text-decoration: none; font-weight: 500; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">Forgot Password?</a>
+                </p>
+                <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+                    <p style="color: #6b7280; font-size: 14px; margin: 0;">
+                        Don't have an account? <a href="#" id="showSignup" style="color: #722f37; text-decoration: none; font-weight: 600;">Sign Up</a>
+                    </p>
+                </div>
+            </div>
+
+            <div id="signupForm" style="display: none;">
+                <div class="form-group">
+                    <label for="signupEmail" style="color: #4b5563; font-weight: 500; margin-bottom: 6px; display: block; font-size: 14px;">Email</label>
+                    <input type="email" id="signupEmail" required style="width: 100%; padding: 12px 16px; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 15px; transition: all 0.2s; box-sizing: border-box;" onfocus="this.style.borderColor='#722f37'; this.style.boxShadow='0 0 0 3px rgba(114, 47, 55, 0.1)'" onblur="this.style.borderColor='#d1d5db'; this.style.boxShadow='none'">
+                </div>
+                <div class="form-group">
+                    <label for="signupPassword" style="color: #4b5563; font-weight: 500; margin-bottom: 6px; display: block; font-size: 14px;">Password</label>
+                    <input type="password" id="signupPassword" required minlength="6" style="width: 100%; padding: 12px 16px; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 15px; transition: all 0.2s; box-sizing: border-box;" onfocus="this.style.borderColor='#722f37'; this.style.boxShadow='0 0 0 3px rgba(114, 47, 55, 0.1)'" onblur="this.style.borderColor='#d1d5db'; this.style.boxShadow='none'">
+                </div>
+                <div class="form-group">
+                    <label for="signupPasswordConfirm" style="color: #4b5563; font-weight: 500; margin-bottom: 6px; display: block; font-size: 14px;">Confirm Password</label>
+                    <input type="password" id="signupPasswordConfirm" required minlength="6" style="width: 100%; padding: 12px 16px; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 15px; transition: all 0.2s; box-sizing: border-box;" onfocus="this.style.borderColor='#722f37'; this.style.boxShadow='0 0 0 3px rgba(114, 47, 55, 0.1)'" onblur="this.style.borderColor='#d1d5db'; this.style.boxShadow='none'">
+                </div>
+                <button id="signupBtn" style="width: 100%; margin: 24px 0 12px 0; background: linear-gradient(135deg, #722f37 0%, #8b3a44 100%); color: white; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 12px rgba(114, 47, 55, 0.3);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(114, 47, 55, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(114, 47, 55, 0.3)'">Create Account</button>
+                <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+                    <p style="color: #6b7280; font-size: 14px; margin: 0;">
+                        Already have an account? <a href="#" id="showLogin" style="color: #722f37; text-decoration: none; font-weight: 600;">Sign In</a>
+                    </p>
+                </div>
+            </div>
+
+            <div id="forgotPasswordForm" style="display: none;">
+                <div class="form-group">
+                    <label for="resetEmail" style="color: #4b5563; font-weight: 500; margin-bottom: 6px; display: block; font-size: 14px;">Email</label>
+                    <input type="email" id="resetEmail" required style="width: 100%; padding: 12px 16px; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 15px; transition: all 0.2s; box-sizing: border-box;" onfocus="this.style.borderColor='#722f37'; this.style.boxShadow='0 0 0 3px rgba(114, 47, 55, 0.1)'" onblur="this.style.borderColor='#d1d5db'; this.style.boxShadow='none'">
+                </div>
+                <button id="resetPasswordBtn" style="width: 100%; margin: 24px 0 12px 0; background: linear-gradient(135deg, #722f37 0%, #8b3a44 100%); color: white; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 12px rgba(114, 47, 55, 0.3);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(114, 47, 55, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(114, 47, 55, 0.3)'">Send Reset Link</button>
+                <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+                    <p style="color: #6b7280; font-size: 14px; margin: 0;">
+                        Remember your password? <a href="#" id="showLoginFromReset" style="color: #722f37; text-decoration: none; font-weight: 600;">Sign In</a>
+                    </p>
+                </div>
+            </div>
+
+            <div id="newPasswordForm" style="display: none;">
+                <h3 style="color: #722f37; text-align: center; margin-bottom: 24px; font-size: 22px; font-weight: 600;">Set New Password</h3>
+                <div class="form-group">
+                    <label for="newPassword" style="color: #4b5563; font-weight: 500; margin-bottom: 6px; display: block; font-size: 14px;">New Password</label>
+                    <input type="password" id="newPassword" required minlength="6" style="width: 100%; padding: 12px 16px; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 15px; transition: all 0.2s; box-sizing: border-box;" onfocus="this.style.borderColor='#722f37'; this.style.boxShadow='0 0 0 3px rgba(114, 47, 55, 0.1)'" onblur="this.style.borderColor='#d1d5db'; this.style.boxShadow='none'">
+                </div>
+                <div class="form-group">
+                    <label for="confirmNewPassword" style="color: #4b5563; font-weight: 500; margin-bottom: 6px; display: block; font-size: 14px;">Confirm Password</label>
+                    <input type="password" id="confirmNewPassword" required minlength="6" style="width: 100%; padding: 12px 16px; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 15px; transition: all 0.2s; box-sizing: border-box;" onfocus="this.style.borderColor='#722f37'; this.style.boxShadow='0 0 0 3px rgba(114, 47, 55, 0.1)'" onblur="this.style.borderColor='#d1d5db'; this.style.boxShadow='none'">
+                </div>
+                <button id="updatePasswordBtn" style="width: 100%; margin: 24px 0 12px 0; background: linear-gradient(135deg, #722f37 0%, #8b3a44 100%); color: white; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 12px rgba(114, 47, 55, 0.3);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(114, 47, 55, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(114, 47, 55, 0.3)'">Update Password</button>
+            </div>
+
+            <div id="authError" style="display: none; background: #fee2e2; color: #991b1b; padding: 12px 16px; border-radius: 8px; margin-top: 16px; font-size: 14px; border-left: 4px solid #dc2626;"></div>
+            <div id="authSuccess" style="display: none; background: #d1fae5; color: #065f46; padding: 12px 16px; border-radius: 8px; margin-top: 16px; font-size: 14px; border-left: 4px solid #10b981;"></div>
+        </div>
+    </div>
+
+    <!-- Camera Modal -->
+    <div id="cameraModal" class="camera-modal">
+        <div class="camera-container">
+            <video id="cameraVideo" autoplay playsinline></video>
+            <canvas id="cameraCanvas" style="display: none;"></canvas>
+            <div class="camera-controls">
+                <button id="captureBtn">📸 Capture</button>
+                <button id="closeCameraBtn">✕ Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Supabase
+            const supabase = window.supabase.createClient(
+                'https://xozynrlduiyuqkstyhly.supabase.co',
+                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvenlucmxkdWl5dXFrc3R5aGx5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk5OTY3MjksImV4cCI6MjA4NTU3MjcyOX0.SBvP6E7AZF0c9xFXwQU664n_M1L2xyiA6tafAXRlyRQ'
+            );
+
+            let wines = [];
+            let consumedWines = [];
+            let locations = [];
+            let cameraStream = null;
+            let currentPhoto = null;
+            let currentUser = null;
+            let friends = [];
+            let friendRequests = [];
+            let currentFriendView = null;
+
+            // Auth functions
+            async function checkAuth() {
+                // Check if this is a password recovery link - check both hash and URL params
+                const hashParams = new URLSearchParams(window.location.hash.substring(1));
+                const urlParams = new URLSearchParams(window.location.search);
+                const isRecovery = hashParams.get('type') === 'recovery' || 
+                                  urlParams.get('type') === 'recovery' ||
+                                  window.location.hash.includes('type=recovery');
+                
+                console.log('Recovery mode:', isRecovery);
+                console.log('Hash:', window.location.hash);
+                console.log('Search:', window.location.search);
+                
+                const { data: { session } } = await supabase.auth.getSession();
+                
+                if (isRecovery && session) {
+                    // Show password reset form
+                    console.log('Showing password reset form');
+                    document.getElementById('loginForm').style.display = 'none';
+                    document.getElementById('signupForm').style.display = 'none';
+                    document.getElementById('forgotPasswordForm').style.display = 'none';
+                    document.getElementById('newPasswordForm').style.display = 'block';
+                    document.getElementById('authModal').style.display = 'flex';
+                    document.getElementById('mainApp').style.display = 'none';
+                    currentUser = session.user;
+                } else if (session) {
+                    currentUser = session.user;
+                    document.getElementById('authModal').style.display = 'none';
+                    document.getElementById('mainApp').style.display = 'block';
+                    await loadData();
+                } else {
+                    document.getElementById('authModal').style.display = 'flex';
+                    document.getElementById('mainApp').style.display = 'none';
+                }
+            }
+
+            async function handleLogin(email, password) {
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+                
+                if (error) {
+                    showAuthError(error.message);
+                } else {
+                    currentUser = data.user;
+                    document.getElementById('authModal').style.display = 'none';
+                    document.getElementById('mainApp').style.display = 'block';
+                    await loadData();
+                }
+            }
+
+            async function handleSignup(email, password) {
+                const { data, error } = await supabase.auth.signUp({
+                    email: email,
+                    password: password
+                });
+                
+                if (error) {
+                    showAuthError(error.message);
+                } else {
+                    // Create user profile
+                    if (data.user) {
+                        await supabase.from('user_profiles').insert([{
+                            id: data.user.id,
+                            email: email
+                        }]);
+                    }
+                    showAuthSuccess('Account created! Please check your email to verify your account, then sign in.');
+                    setTimeout(() => {
+                        document.getElementById('showLogin').click();
+                    }, 3000);
+                }
+            }
+
+            window.handleLogout = async function() {
+                await supabase.auth.signOut();
+                currentUser = null;
+                wines = [];
+                consumedWines = [];
+                locations = [];
+                document.getElementById('authModal').style.display = 'flex';
+                document.getElementById('mainApp').style.display = 'none';
+            };
+
+            function showAuthError(message) {
+                const errorDiv = document.getElementById('authError');
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+                document.getElementById('authSuccess').style.display = 'none';
+            }
+
+            function showAuthSuccess(message) {
+                const successDiv = document.getElementById('authSuccess');
+                successDiv.textContent = message;
+                successDiv.style.display = 'block';
+                document.getElementById('authError').style.display = 'none';
+            }
+
+            // Auth UI event listeners
+            document.getElementById('showSignup').addEventListener('click', (e) => {
+                e.preventDefault();
+                document.getElementById('loginForm').style.display = 'none';
+                document.getElementById('forgotPasswordForm').style.display = 'none';
+                document.getElementById('signupForm').style.display = 'block';
+                document.getElementById('authError').style.display = 'none';
+                document.getElementById('authSuccess').style.display = 'none';
+            });
+
+            document.getElementById('showLogin').addEventListener('click', (e) => {
+                e.preventDefault();
+                document.getElementById('signupForm').style.display = 'none';
+                document.getElementById('forgotPasswordForm').style.display = 'none';
+                document.getElementById('loginForm').style.display = 'block';
+                document.getElementById('authError').style.display = 'none';
+                document.getElementById('authSuccess').style.display = 'none';
+            });
+
+            document.getElementById('showForgotPassword').addEventListener('click', (e) => {
+                e.preventDefault();
+                document.getElementById('loginForm').style.display = 'none';
+                document.getElementById('signupForm').style.display = 'none';
+                document.getElementById('forgotPasswordForm').style.display = 'block';
+                document.getElementById('authError').style.display = 'none';
+                document.getElementById('authSuccess').style.display = 'none';
+            });
+
+            document.getElementById('showLoginFromReset').addEventListener('click', (e) => {
+                e.preventDefault();
+                document.getElementById('forgotPasswordForm').style.display = 'none';
+                document.getElementById('signupForm').style.display = 'none';
+                document.getElementById('loginForm').style.display = 'block';
+                document.getElementById('authError').style.display = 'none';
+                document.getElementById('authSuccess').style.display = 'none';
+            });
+
+            document.getElementById('resetPasswordBtn').addEventListener('click', async () => {
+                const email = document.getElementById('resetEmail').value;
+                if (!email) {
+                    showAuthError('Please enter your email');
+                    return;
+                }
+                
+                try {
+                    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                        redirectTo: 'https://wcapp2025-oss.github.io/Wine-Cellar/'
+                    });
+                    
+                    if (error) {
+                        showAuthError(error.message);
+                    } else {
+                        showAuthSuccess('Password reset link sent! Check your email.');
+                        document.getElementById('resetEmail').value = '';
+                    }
+                } catch (error) {
+                    showAuthError('Failed to send reset email');
+                }
+            });
+
+            document.getElementById('updatePasswordBtn').addEventListener('click', async () => {
+                const newPassword = document.getElementById('newPassword').value;
+                const confirmPassword = document.getElementById('confirmNewPassword').value;
+                
+                if (newPassword !== confirmPassword) {
+                    showAuthError('Passwords do not match');
+                    return;
+                }
+                
+                if (newPassword.length < 6) {
+                    showAuthError('Password must be at least 6 characters');
+                    return;
+                }
+                
+                try {
+                    const { error } = await supabase.auth.updateUser({
+                        password: newPassword
+                    });
+                    
+                    if (error) {
+                        showAuthError(error.message);
+                    } else {
+                        showAuthSuccess('Password updated successfully!');
+                        setTimeout(() => {
+                            document.getElementById('authModal').style.display = 'none';
+                            document.getElementById('mainApp').style.display = 'block';
+                            loadData();
+                        }, 1500);
+                    }
+                } catch (error) {
+                    showAuthError('Failed to update password');
+                }
+            });
+
+            document.getElementById('loginBtn').addEventListener('click', async () => {
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+                if (email && password) {
+                    await handleLogin(email, password);
+                }
+            });
+
+            document.getElementById('signupBtn').addEventListener('click', async () => {
+                const email = document.getElementById('signupEmail').value;
+                const password = document.getElementById('signupPassword').value;
+                const passwordConfirm = document.getElementById('signupPasswordConfirm').value;
+                
+                if (password !== passwordConfirm) {
+                    showAuthError('Passwords do not match');
+                    return;
+                }
+                
+                if (email && password) {
+                    await handleSignup(email, password);
+                }
+            });
+
+            // Check auth on load
+            checkAuth();
+
+            // Camera functionality
+            document.getElementById('openCameraBtn').addEventListener('click', async () => {
+                const modal = document.getElementById('cameraModal');
+                const video = document.getElementById('cameraVideo');
+                
+                try {
+                    cameraStream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { facingMode: 'environment' } 
+                    });
+                    video.srcObject = cameraStream;
+                    modal.classList.add('active');
+                } catch (error) {
+                    alert('Unable to access camera. Please use file upload instead.');
+                }
+            });
+
+            document.getElementById('closeCameraBtn').addEventListener('click', () => {
+                stopCamera();
+            });
+
+            document.getElementById('captureBtn').addEventListener('click', () => {
+                const video = document.getElementById('cameraVideo');
+                const canvas = document.getElementById('cameraCanvas');
+                
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0);
+                
+                canvas.toBlob((blob) => {
+                    const file = new File([blob], 'wine-label.jpg', { type: 'image/jpeg' });
+                    handlePhotoCapture(file);
+                    stopCamera();
+                }, 'image/jpeg', 0.95);
+            });
+
+            function stopCamera() {
+                const modal = document.getElementById('cameraModal');
+                if (cameraStream) {
+                    cameraStream.getTracks().forEach(track => track.stop());
+                    cameraStream = null;
+                }
+                modal.classList.remove('active');
+            }
+
+            // Photo upload
+            document.getElementById('photoUpload').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    handlePhotoCapture(file);
+                }
+            });
+
+            function handlePhotoCapture(file) {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    currentPhoto = e.target.result;
+                    document.getElementById('photoPreview').src = currentPhoto;
+                    document.getElementById('photoPreview').style.display = 'block';
+                    
+                    // Analyze with AI
+                    await analyzeWineLabel(currentPhoto);
+                };
+                reader.readAsDataURL(file);
+            }
+
+            async function analyzeWineLabel(imageData) {
+                const statusDiv = document.getElementById('analysisStatus');
+                statusDiv.style.display = 'block';
+                statusDiv.textContent = '🤖 Analyzing wine label with AI...';
+                statusDiv.style.background = '#dbeafe';
+                statusDiv.style.color = '#1e40af';
+                
+                try {
+                    const response = await fetch("https://wine-ai-proxy.vercel.app/api/analyze-wine", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            imageData: imageData
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API error: ${response.status}`);
+                    }
+
+                    const wineInfo = await response.json();
+                    
+                    // Fill in the form with extracted data
+                    if (wineInfo.name) document.getElementById('wineName').value = wineInfo.name;
+                    if (wineInfo.vintage) document.getElementById('vintage').value = wineInfo.vintage;
+                    if (wineInfo.type) document.getElementById('wineType').value = wineInfo.type;
+                    if (wineInfo.country) document.getElementById('country').value = wineInfo.country;
+                    if (wineInfo.region) document.getElementById('region').value = wineInfo.region;
+                    
+                    statusDiv.textContent = '✓ Label analyzed successfully! Form fields filled automatically.';
+                    statusDiv.style.background = '#d1fae5';
+                    statusDiv.style.color = '#065f46';
+                    
+                } catch (error) {
+                    console.error('AI analysis error:', error);
+                    statusDiv.textContent = '⚠️ AI analysis failed. Please fill in details manually. Error: ' + error.message;
+                    statusDiv.style.background = '#fee2e2';
+                    statusDiv.style.color = '#991b1b';
+                }
+            }
+
+        // Tab switching
+        // Global function for dashboard boxes to switch tabs
+        window.switchToTab = function(btnId, tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(btnId).classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        };
+
+        document.getElementById('dashboardBtn').addEventListener('click', () => {
+            switchToTab('dashboardBtn', 'dashboardTab');
+            updateDashboard();
+        });
+
+        document.getElementById('addWineBtn').addEventListener('click', () => {
+            switchToTab('addWineBtn', 'addWineTab');
+        });
+
+        document.getElementById('inventoryBtn').addEventListener('click', () => {
+            switchToTab('inventoryBtn', 'inventoryTab');
+        });
+
+        document.getElementById('consumedBtn').addEventListener('click', () => {
+            switchToTab('consumedBtn', 'consumedTab');
+            renderConsumedWines();
+        });
+
+        document.getElementById('friendsBtn').addEventListener('click', () => {
+            switchToTab('friendsBtn', 'friendsTab');
+            loadFriends();
+        });
+
+        document.getElementById('locationsBtn').addEventListener('click', () => {
+            switchToTab('locationsBtn', 'locationsTab');
+        });
+
+        // Update dashboard numbers
+        function updateDashboard() {
+            // Safety check - only update if dashboard elements exist
+            const dashTotalBottles = document.getElementById('dashTotalBottles');
+            if (!dashTotalBottles) return; // Dashboard not rendered yet
+            
+            const totalBottles = wines.reduce((sum, w) => sum + w.quantity, 0);
+            const consumedBottles = consumedWines.length;
+            const totalLocations = locations.filter(l => l.is_parent).length;
+            
+            dashTotalBottles.textContent = totalBottles;
+            document.getElementById('dashConsumedBottles').textContent = consumedBottles;
+            document.getElementById('dashLocations').textContent = totalLocations;
+            
+            // Calculate summary stats
+            const redCount = wines.filter(w => w.type === 'Red').reduce((sum, w) => sum + w.quantity, 0);
+            const whiteCount = wines.filter(w => w.type === 'White').reduce((sum, w) => sum + w.quantity, 0);
+            const roseCount = wines.filter(w => w.type === 'Rosé').reduce((sum, w) => sum + w.quantity, 0);
+            const sparklingCount = wines.filter(w => w.type === 'Sparkling').reduce((sum, w) => sum + w.quantity, 0);
+            
+            const uniqueCountries = new Set(wines.map(w => w.country).filter(Boolean)).size;
+            const uniqueRegions = new Set(wines.map(w => w.region).filter(Boolean)).size;
+            const uniqueVintages = new Set(wines.map(w => w.vintage).filter(Boolean)).size;
+            const uniqueWines = new Set(wines.map(w => `${w.name}|${w.region}`)).size;
+            
+            const statRed = document.getElementById('statRed');
+            if (statRed) {
+                statRed.textContent = redCount;
+                document.getElementById('statWhite').textContent = whiteCount;
+                document.getElementById('statRose').textContent = roseCount;
+                document.getElementById('statSparkling').textContent = sparklingCount;
+                document.getElementById('statCountries').textContent = uniqueCountries;
+                document.getElementById('statRegions').textContent = uniqueRegions;
+                document.getElementById('statVintages').textContent = uniqueVintages;
+                document.getElementById('statUniqueWines').textContent = uniqueWines;
+            }
+        }
+
+        // Load data
+        async function loadData() {
+            try {
+                // Load wines
+                const { data: winesData, error: winesError } = await supabase
+                    .from('wines')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .order('date_added', { ascending: false });
+                
+                if (winesError) throw winesError;
+                wines = winesData || [];
+                
+                // Load consumed wines
+                const { data: consumedData, error: consumedError } = await supabase
+                    .from('consumed_wines')
+                    .select('*')
+                    .eq('user_id', currentUser.id);
+                
+                if (consumedError) throw consumedError;
+                consumedWines = consumedData || [];
+                
+                // Load locations
+                const { data: locationsData, error: locationsError } = await supabase
+                    .from('locations')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .order('name');
+                
+                if (locationsError) throw locationsError;
+                locations = locationsData || [];
+                
+                // Add default locations if none exist
+                if (locations.length === 0) {
+                    const defaultLocs = [
+                        { id: '1', name: 'Fridge - Top Shelf', user_id: currentUser.id, is_parent: true },
+                        { id: '2', name: 'Fridge - Middle Shelf', user_id: currentUser.id, is_parent: true },
+                        { id: '3', name: 'Fridge - Bottom Shelf', user_id: currentUser.id, is_parent: true },
+                        { id: '4', name: 'Wine Cellar', user_id: currentUser.id, is_parent: true },
+                        { id: '5', name: 'Pre-order', user_id: currentUser.id, is_parent: true }
+                    ];
+                    
+                    const { error } = await supabase.from('locations').insert(defaultLocs);
+                    if (!error) locations = defaultLocs;
+                }
+                
+                updateUI();
+                updateDashboard(); // Load dashboard on startup
+            } catch (error) {
+                console.error('Error loading data:', error);
+                console.error('Error details:', JSON.stringify(error, null, 2));
+                alert('Failed to load data: ' + (error.message || 'Unknown error'));
+            }
+        }
+
+        // Add wine
+        // Normalize text input to prevent duplicates
+        function normalizeText(text) {
+            if (!text) return '';
+            
+            const cleaned = text.trim().replace(/\s+/g, ' ');
+            
+            // Split into words
+            const words = cleaned.split(' ');
+            
+            // French articles and prepositions that should stay lowercase
+            const frenchLowercase = ['de', 'du', 'des', 'la', 'le', 'les', 'et'];
+            
+            // Capitalize first word, then handle rest
+            return words.map((word, index) => {
+                const lowerWord = word.toLowerCase();
+                
+                // First word always capitalized
+                if (index === 0) {
+                    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+                }
+                
+                // French articles stay lowercase
+                if (frenchLowercase.includes(lowerWord)) {
+                    return lowerWord;
+                }
+                
+                // Everything else gets title case
+                return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+            }).join(' ');
+        }
+
+        // Special normalization for common wine regions/countries
+        function normalizeWineText(text, type) {
+            if (!text) return '';
+            
+            const normalized = normalizeText(text);
+            
+            // Comprehensive wine region/appellation corrections (France, Italy, Spain)
+            const corrections = {
+                // FRANCE - Rhône Valley
+                'Chateauneuf du Pape': 'Châteauneuf-du-Pape',
+                'Chateauneuf-du-Pape': 'Châteauneuf-du-Pape',
+                'Chateauneuf-du-pape': 'Châteauneuf-du-Pape',
+                'Cotes du Rhone': 'Côtes du Rhône',
+                'Cote Rotie': 'Côte-Rôtie',
+                'Cote-Rotie': 'Côte-Rôtie',
+                'Hermitage': 'Hermitage',
+                'Crozes-Hermitage': 'Crozes-Hermitage',
+                'Saint Joseph': 'Saint-Joseph',
+                'St Joseph': 'Saint-Joseph',
+                'Gigondas': 'Gigondas',
+                'Vacqueyras': 'Vacqueyras',
+                'Condrieu': 'Condrieu',
+                
+                // FRANCE - Burgundy
+                'Cote de Nuits': 'Côte de Nuits',
+                'Cote de Beaune': 'Côte de Beaune',
+                'Chambolle Musigny': 'Chambolle-Musigny',
+                'Vosne Romanee': 'Vosne-Romanée',
+                'Gevrey Chambertin': 'Gevrey-Chambertin',
+                'Nuits Saint Georges': 'Nuits-Saint-Georges',
+                'Nuits St Georges': 'Nuits-Saint-Georges',
+                'Volnay': 'Volnay',
+                'Pommard': 'Pommard',
+                'Meursault': 'Meursault',
+                'Puligny Montrachet': 'Puligny-Montrachet',
+                'Chassagne Montrachet': 'Chassagne-Montrachet',
+                'Aloxe Corton': 'Aloxe-Corton',
+                'Corton Charlemagne': 'Corton-Charlemagne',
+                'Savigny les Beaune': 'Savigny-lès-Beaune',
+                'Beaune': 'Beaune',
+                'Chablis': 'Chablis',
+                'Pouilly Fuisse': 'Pouilly-Fuissé',
+                
+                // FRANCE - Bordeaux
+                'Saint Emilion': 'Saint-Émilion',
+                'St Emilion': 'Saint-Émilion',
+                'St-Emilion': 'Saint-Émilion',
+                'St. Emilion': 'Saint-Émilion',
+                'Pomerol': 'Pomerol',
+                'Pauillac': 'Pauillac',
+                'Margaux': 'Margaux',
+                'Saint Julien': 'Saint-Julien',
+                'St Julien': 'Saint-Julien',
+                'Saint Estephe': 'Saint-Estèphe',
+                'St Estephe': 'Saint-Estèphe',
+                'Pessac Leognan': 'Pessac-Léognan',
+                'Graves': 'Graves',
+                'Sauternes': 'Sauternes',
+                'Medoc': 'Médoc',
+                'Haut Medoc': 'Haut-Médoc',
+                
+                // FRANCE - Loire Valley
+                'Sancerre': 'Sancerre',
+                'Pouilly Fume': 'Pouilly-Fumé',
+                'Vouvray': 'Vouvray',
+                'Chinon': 'Chinon',
+                'Bourgueil': 'Bourgueil',
+                'Muscadet': 'Muscadet',
+                'Savennieres': 'Savennières',
+                
+                // FRANCE - Other
+                'Alsace': 'Alsace',
+                'Alsace Grand Cru': 'Alsace Grand Cru',
+                'Champagne': 'Champagne',
+                'Provence': 'Provence',
+                'Languedoc': 'Languedoc',
+                'Roussillon': 'Roussillon',
+                'Bandol': 'Bandol',
+                
+                // ITALY - Piedmont
+                'Barolo': 'Barolo',
+                'Barbaresco': 'Barbaresco',
+                'Barbera d Alba': "Barbera d'Alba",
+                "Barbera d'Alba": "Barbera d'Alba",
+                'Dolcetto d Alba': "Dolcetto d'Alba",
+                "Dolcetto d'Alba": "Dolcetto d'Alba",
+                'Roero': 'Roero',
+                'Gavi': 'Gavi',
+                'Asti': 'Asti',
+                
+                // ITALY - Tuscany
+                'Chianti': 'Chianti',
+                'Chianti Classico': 'Chianti Classico',
+                'Brunello di Montalcino': 'Brunello di Montalcino',
+                'Vino Nobile di Montepulciano': 'Vino Nobile di Montepulciano',
+                'Bolgheri': 'Bolgheri',
+                'Carmignano': 'Carmignano',
+                'Vernaccia di San Gimignano': 'Vernaccia di San Gimignano',
+                'Morellino di Scansano': 'Morellino di Scansano',
+                
+                // ITALY - Veneto
+                'Amarone della Valpolicella': 'Amarone della Valpolicella',
+                'Valpolicella': 'Valpolicella',
+                'Soave': 'Soave',
+                'Bardolino': 'Bardolino',
+                'Prosecco': 'Prosecco',
+                
+                // ITALY - Other regions
+                'Aglianico del Vulture': 'Aglianico del Vulture',
+                'Taurasi': 'Taurasi',
+                'Fiano di Avellino': 'Fiano di Avellino',
+                'Greco di Tufo': 'Greco di Tufo',
+                'Primitivo di Manduria': 'Primitivo di Manduria',
+                'Etna': 'Etna',
+                'Verdicchio': 'Verdicchio',
+                'Montepulciano d Abruzzo': "Montepulciano d'Abruzzo",
+                "Montepulciano d'Abruzzo": "Montepulciano d'Abruzzo",
+                
+                // SPAIN - Rioja
+                'Rioja': 'Rioja',
+                'Rioja Alta': 'Rioja Alta',
+                'Rioja Alavesa': 'Rioja Alavesa',
+                'Rioja Baja': 'Rioja Baja',
+                
+                // SPAIN - Other regions
+                'Ribera del Duero': 'Ribera del Duero',
+                'Priorat': 'Priorat',
+                'Rias Baixas': 'Rías Baixas',
+                'Rias Baixes': 'Rías Baixas',
+                'Rueda': 'Rueda',
+                'Toro': 'Toro',
+                'Jerez': 'Jerez',
+                'Sherry': 'Sherry',
+                'Penedes': 'Penedès',
+                'Navarra': 'Navarra',
+                'Calatayud': 'Calatayud',
+                'Somontano': 'Somontano',
+                'Jumilla': 'Jumilla',
+                'Montsant': 'Montsant',
+                'Bierzo': 'Bierzo',
+                'Valdepenas': 'Valdepeñas',
+                'La Mancha': 'La Mancha',
+                'Cava': 'Cava',
+            };
+            
+            return corrections[normalized] || normalized;
+        }
+
+        document.getElementById('wineForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            const isEditing = editingWineId !== null;
+            submitBtn.textContent = isEditing ? 'Updating...' : 'Adding...';
+            
+            try {
+                const parentLocId = document.getElementById('parentLocation').value;
+                const subLocId = document.getElementById('subLocation').value;
+                
+                const parentLoc = locations.find(l => l.id === parentLocId);
+                const subLoc = locations.find(l => l.id === subLocId);
+                
+                const wineData = {
+                    name: normalizeText(document.getElementById('wineName').value),
+                    vintage: document.getElementById('vintage').value,
+                    type: document.getElementById('wineType').value,
+                    country: normalizeWineText(document.getElementById('country').value),
+                    region: normalizeWineText(document.getElementById('region').value),
+                    sub_region: normalizeWineText(document.getElementById('subRegion').value),
+                    parent_location: parentLoc?.name || '',
+                    sub_location: subLoc?.name || '',
+                    location: `${parentLoc?.name} - ${subLoc?.name}`,
+                    quantity: parseInt(document.getElementById('quantity').value) || 1,
+                    notes: document.getElementById('notes').value,
+                    photo: currentPhoto,
+                    user_id: currentUser.id
+                };
+                
+                if (isEditing) {
+                    // Update existing wine
+                    const { error } = await supabase.from('wines').update(wineData).eq('id', editingWineId);
+                    if (error) throw error;
+                    
+                    const index = wines.findIndex(w => w.id === editingWineId);
+                    if (index !== -1) {
+                        wines[index] = { ...wines[index], ...wineData };
+                    }
+                    
+                    editingWineId = null;
+                    alert('✓ Wine updated!');
+                } else {
+                    // Add new wine
+                    const wine = {
+                        id: Date.now().toString(),
+                        ...wineData,
+                        date_added: new Date().toISOString()
+                    };
+                    
+                    const { error } = await supabase.from('wines').insert([wine]);
+                    if (error) throw error;
+                    
+                    wines.unshift(wine);
+                    alert('✓ Wine added!');
+                }
+                
+                updateUI();
+                
+                document.getElementById('wineForm').reset();
+                document.getElementById('quantity').value = '1';
+                document.getElementById('photoPreview').style.display = 'none';
+                document.getElementById('analysisStatus').style.display = 'none';
+                currentPhoto = null;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert(`Failed to ${isEditing ? 'update' : 'add'} wine: ` + error.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Add to Inventory';
+                editingWineId = null;
+            }
+        });
+
+        // Add location
+        // Location type radio buttons
+        document.getElementById('parentLocationRadio').addEventListener('change', () => {
+            document.getElementById('parentLocationSelect').style.display = 'none';
+        });
+        
+        document.getElementById('subLocationRadio').addEventListener('change', () => {
+            document.getElementById('parentLocationSelect').style.display = 'block';
+            updateParentLocationDropdown();
+        });
+
+        // Cascading dropdowns for wine form
+        document.getElementById('parentLocation').addEventListener('change', (e) => {
+            const parentId = e.target.value;
+            const subDropdown = document.getElementById('subLocation');
+            
+            if (!parentId) {
+                subDropdown.innerHTML = '<option value="">Select main location first...</option>';
+                return;
+            }
+            
+            const subLocations = locations.filter(l => l.parent_id === parentId);
+            
+            if (subLocations.length === 0) {
+                subDropdown.innerHTML = '<option value="">No sub-locations. Add some in Manage Locations.</option>';
+            } else {
+                subDropdown.innerHTML = '<option value="">Select sub-location...</option>' +
+                    subLocations.map(loc => `<option value="${loc.id}">${loc.name}</option>`).join('');
+            }
+        });
+
+        function updateParentLocationDropdown() {
+            const dropdown = document.getElementById('parentLocationDropdown');
+            const parentLocations = locations.filter(l => l.is_parent);
+            
+            dropdown.innerHTML = '<option value="">Select parent...</option>' +
+                parentLocations.map(loc => `<option value="${loc.id}">${loc.name}</option>`).join('');
+        }
+
+        document.getElementById('locationForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('locationSubmitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Adding...';
+            
+            try {
+                const isParent = document.getElementById('parentLocationRadio').checked;
+                const locationName = document.getElementById('locationName').value;
+                
+                const location = {
+                    id: Date.now().toString(),
+                    name: locationName,
+                    user_id: currentUser.id,
+                    is_parent: isParent,
+                    parent_id: isParent ? null : document.getElementById('parentLocationDropdown').value
+                };
+                
+                if (!isParent && !location.parent_id) {
+                    alert('Please select a parent location');
+                    return;
+                }
+                
+                const { error } = await supabase.from('locations').insert([location]);
+                if (error) throw error;
+                
+                locations.push(location);
+                updateUI();
+                
+                document.getElementById('locationForm').reset();
+                document.getElementById('parentLocationRadio').checked = true;
+                document.getElementById('parentLocationSelect').style.display = 'none';
+                alert('✓ Location added!');
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to add location: ' + error.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Add Location';
+            }
+        });
+
+        // Delete wine
+        // Edit wine (global function)
+        let editingWineId = null;
+        
+        window.editWine = function(id) {
+            const wine = wines.find(w => w.id === id);
+            if (!wine) return;
+            
+            editingWineId = id;
+            
+            // Populate form with wine data
+            document.getElementById('wineName').value = wine.name || '';
+            document.getElementById('vintage').value = wine.vintage || '';
+            document.getElementById('wineType').value = wine.type || '';
+            document.getElementById('country').value = wine.country || '';
+            document.getElementById('region').value = wine.region || '';
+            document.getElementById('subRegion').value = wine.sub_region || '';
+            document.getElementById('quantity').value = wine.quantity || 1;
+            document.getElementById('notes').value = wine.notes || '';
+            
+            // Set location dropdowns
+            const parentLoc = locations.find(l => l.is_parent && l.name === wine.parent_location);
+            if (parentLoc) {
+                document.getElementById('parentLocation').value = parentLoc.id;
+                // Trigger change to load sub-locations
+                document.getElementById('parentLocation').dispatchEvent(new Event('change'));
+                
+                setTimeout(() => {
+                    const subLoc = locations.find(l => l.parent_id === parentLoc.id && l.name === wine.sub_location);
+                    if (subLoc) {
+                        document.getElementById('subLocation').value = subLoc.id;
+                    }
+                }, 100);
+            }
+            
+            // Show photo if exists
+            if (wine.photo) {
+                document.getElementById('photoPreview').src = wine.photo;
+                document.getElementById('photoPreview').style.display = 'block';
+                currentPhoto = wine.photo;
+            }
+            
+            // Change submit button text
+            document.getElementById('submitBtn').textContent = 'Update Wine';
+            
+            // Switch to Add Wine tab (where the form now lives)
+            switchToTab('addWineBtn', 'addWineTab');
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        // Delete wine (global function)
+        window.deleteWine = async function(id) {
+            if (!confirm('Delete this wine?')) return;
+            
+            try {
+                const { error } = await supabase.from('wines').delete().eq('id', id);
+                if (error) throw error;
+                
+                wines = wines.filter(w => w.id !== id);
+                updateUI();
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to delete: ' + error.message);
+            }
+        };
+
+        // Mark consumed (global function)
+        // Mark consumed (global function)
+        window.markConsumed = async function(id) {
+            const wine = wines.find(w => w.id === id);
+            if (!wine) return;
+            
+            const notes = prompt('Tasting notes:', wine.notes || '');
+            if (notes === null) return;
+            
+            try {
+                const consumedWine = {
+                    ...wine,
+                    consumed_date: new Date().toISOString(),
+                    consumed_notes: notes,
+                    consumed_quantity: 1
+                };
+                
+                await supabase.from('consumed_wines').insert([consumedWine]);
+                await supabase.from('wines').delete().eq('id', id);
+                
+                consumedWines.push(consumedWine);
+                wines = wines.filter(w => w.id !== id);
+                updateUI();
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to mark as consumed: ' + error.message);
+            }
+        };
+
+        // Delete location (global function)
+        window.deleteLocation = async function(id) {
+            const location = locations.find(l => l.id === id);
+            if (!location) return;
+            
+            const winesWithLocation = wines.filter(w => w.location === location.name);
+            if (winesWithLocation.length > 0) {
+                alert(`Cannot delete "${location.name}" - ${winesWithLocation.length} wine(s) stored there.`);
+                return;
+            }
+            
+            if (!confirm(`Delete "${location.name}"?`)) return;
+            
+            try {
+                const { error } = await supabase.from('locations').delete().eq('id', id);
+                if (error) throw error;
+                
+                locations = locations.filter(l => l.id !== id);
+                updateUI();
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to delete: ' + error.message);
+            }
+        };
+
+        // Update UI
+        function updateUI() {
+            renderWines();
+            renderLocations();
+            updateLocationDropdown();
+            updateAutocompleteOptions();
+            updateDashboard();
+        }
+
+        // Render wines
+        function renderWines() {
+            const container = document.getElementById('wineList');
+            
+            if (wines.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div style="font-size: 3em; margin-bottom: 10px;">🍾</div>
+                        <p>No wines yet. Add your first bottle!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Update filter dropdowns
+            updateFilterDropdowns();
+            
+            // Apply filters
+            let filteredWines = [...wines];
+            
+            const searchTerm = document.getElementById('searchBox')?.value.toLowerCase() || '';
+            const typeFilter = document.getElementById('filterType')?.value;
+            const countryFilter = document.getElementById('filterCountry')?.value;
+            const regionFilter = document.getElementById('filterRegion')?.value;
+            const subRegionFilter = document.getElementById('filterSubRegion')?.value;
+            const vintageFilter = document.getElementById('filterVintage')?.value;
+            
+            // Search filter (searches name, region, sub-region, vintage, country)
+            if (searchTerm) {
+                filteredWines = filteredWines.filter(w => 
+                    (w.name && w.name.toLowerCase().includes(searchTerm)) ||
+                    (w.region && w.region.toLowerCase().includes(searchTerm)) ||
+                    (w.sub_region && w.sub_region.toLowerCase().includes(searchTerm)) ||
+                    (w.vintage && w.vintage.toString().includes(searchTerm)) ||
+                    (w.country && w.country.toLowerCase().includes(searchTerm))
+                );
+            }
+            
+            if (typeFilter) filteredWines = filteredWines.filter(w => w.type === typeFilter);
+            if (countryFilter) filteredWines = filteredWines.filter(w => w.country === countryFilter);
+            if (regionFilter) filteredWines = filteredWines.filter(w => w.region === regionFilter);
+            if (subRegionFilter) filteredWines = filteredWines.filter(w => w.sub_region === subRegionFilter);
+            if (vintageFilter) filteredWines = filteredWines.filter(w => w.vintage === vintageFilter);
+            
+            // Group wines by NAME ONLY (collapse all vintages and locations)
+            const grouped = {};
+            filteredWines.forEach(wine => {
+                const key = `${wine.name}|${wine.region}|${wine.type}`;
+                if (!grouped[key]) {
+                    grouped[key] = {
+                        name: wine.name,
+                        region: wine.region,
+                        sub_region: wine.sub_region,
+                        type: wine.type,
+                        country: wine.country,
+                        photo: wine.photo,
+                        totalQuantity: 0,
+                        vintages: {}
+                    };
+                }
+                
+                // Group by vintage within this wine
+                const vintageKey = wine.vintage || 'NV';
+                if (!grouped[key].vintages[vintageKey]) {
+                    grouped[key].vintages[vintageKey] = {
+                        vintage: wine.vintage,
+                        quantity: 0,
+                        locations: []
+                    };
+                }
+                
+                grouped[key].totalQuantity += wine.quantity;
+                grouped[key].vintages[vintageKey].quantity += wine.quantity;
+                grouped[key].vintages[vintageKey].locations.push({
+                    location: wine.location,
+                    quantity: wine.quantity,
+                    id: wine.id,
+                    wine: wine
+                });
+            });
+            
+            // Convert to array and sort by region, then name
+            const groupedArray = Object.values(grouped).sort((a, b) => {
+                const regionA = (a.region || 'No region').toLowerCase();
+                const regionB = (b.region || 'No region').toLowerCase();
+                
+                if (regionA !== regionB) {
+                    return regionA.localeCompare(regionB);
+                }
+                
+                const nameA = a.name.toLowerCase();
+                const nameB = b.name.toLowerCase();
+                return nameA.localeCompare(nameB);
+            });
+            
+            if (groupedArray.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div style="font-size: 2em; margin-bottom: 10px;">🔍</div>
+                        <p>No wines match your filters</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = groupedArray.map(wine => {
+                const vintageCount = Object.keys(wine.vintages).length;
+                const vintageText = vintageCount === 1 ? 
+                    Object.values(wine.vintages)[0].vintage || 'NV' : 
+                    `${vintageCount} vintages`;
+                
+                return `
+                <div class="wine-item-compact" onclick="showVintages('${wine.name}', '${wine.region}', '${wine.type}')" style="cursor: pointer;">
+                    ${wine.photo ? `<img src="${wine.photo}" class="wine-photo">` : '<div class="wine-photo" style="background: #e5e7eb; display: flex; align-items: center; justify-content: center; color: #9ca3af; font-size: 1.5em;">🍷</div>'}
+                    <div class="wine-info">
+                        <div class="wine-name-compact">${wine.name}</div>
+                        <div class="wine-details-compact">
+                            ${wine.region ? `<strong>${wine.region}</strong> • ` : ''}
+                            ${wine.sub_region ? `${wine.sub_region} • ` : ''}
+                            ${vintageText} • 
+                            ${wine.type ? `${wine.type} • ` : ''}
+                            ${wine.country ? `${wine.country} • ` : ''}
+                            <strong>${wine.totalQuantity} ${wine.totalQuantity > 1 ? 'bottles' : 'bottle'}</strong>
+                        </div>
+                    </div>
+                    <div class="wine-actions-compact">
+                        <button onclick="event.stopPropagation(); showVintages('${wine.name}', '${wine.region}', '${wine.type}')" style="background: #722f37; padding: 5px 10px; font-size: 0.75em; width: auto;">📅</button>
+                    </div>
+                </div>
+            `}).join('');
+        }
+        
+        function updateFilterDropdowns() {
+            // Update country dropdown
+            const countries = [...new Set(wines.map(w => w.country).filter(Boolean))].sort();
+            const countrySelect = document.getElementById('filterCountry');
+            if (countrySelect) {
+                const currentValue = countrySelect.value;
+                countrySelect.innerHTML = '<option value="">All Countries</option>' +
+                    countries.map(c => `<option value="${c}" ${c === currentValue ? 'selected' : ''}>${c}</option>`).join('');
+            }
+            
+            // Update region dropdown
+            const regions = [...new Set(wines.map(w => w.region).filter(Boolean))].sort();
+            const regionSelect = document.getElementById('filterRegion');
+            if (regionSelect) {
+                const currentValue = regionSelect.value;
+                regionSelect.innerHTML = '<option value="">All Regions</option>' +
+                    regions.map(r => `<option value="${r}" ${r === currentValue ? 'selected' : ''}>${r}</option>`).join('');
+            }
+            
+            // Update sub-region dropdown
+            const subRegions = [...new Set(wines.map(w => w.sub_region).filter(Boolean))].sort();
+            const subRegionSelect = document.getElementById('filterSubRegion');
+            if (subRegionSelect) {
+                const currentValue = subRegionSelect.value;
+                subRegionSelect.innerHTML = '<option value="">All Sub-regions</option>' +
+                    subRegions.map(sr => `<option value="${sr}" ${sr === currentValue ? 'selected' : ''}>${sr}</option>`).join('');
+            }
+            
+            // Update vintage dropdown
+            const vintages = [...new Set(wines.map(w => w.vintage).filter(Boolean))].sort().reverse(); // Most recent first
+            const vintageSelect = document.getElementById('filterVintage');
+            if (vintageSelect) {
+                const currentValue = vintageSelect.value;
+                vintageSelect.innerHTML = '<option value="">All Vintages</option>' +
+                    vintages.map(v => `<option value="${v}" ${v === currentValue ? 'selected' : ''}>${v}</option>`).join('');
+            }
+        }
+        
+        // Show all vintages for a wine
+        window.showVintages = function(name, region, type) {
+            const wineVintages = wines.filter(w => 
+                w.name === name && 
+                w.region === region && 
+                w.type === type
+            );
+            
+            // Group by vintage
+            const vintageGroups = {};
+            wineVintages.forEach(wine => {
+                const vintageKey = wine.vintage || 'NV';
+                if (!vintageGroups[vintageKey]) {
+                    vintageGroups[vintageKey] = [];
+                }
+                vintageGroups[vintageKey].push(wine);
+            });
+            
+            document.getElementById('vintageWineName').textContent = name;
+            
+            const vintageArray = Object.entries(vintageGroups).sort((a, b) => {
+                if (a[0] === 'NV') return 1;
+                if (b[0] === 'NV') return -1;
+                return b[0].localeCompare(a[0]); // Most recent first
+            });
+            
+            document.getElementById('vintageDetailContent').innerHTML = vintageArray.map(([vintage, wines]) => {
+                const totalQty = wines.reduce((sum, w) => sum + w.quantity, 0);
+                return `
+                    <div style="margin-bottom: 20px; border: 2px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
+                        <div onclick="showWineDetail('${wines.map(w => w.id).join(',')}')" style="background: #f9fafb; padding: 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-size: 1.1em; font-weight: 600; color: #722f37;">${vintage === 'NV' ? 'Non-Vintage' : vintage}</div>
+                                <div style="color: #6b7280; font-size: 0.9em; margin-top: 4px;">${totalQty} ${totalQty > 1 ? 'bottles' : 'bottle'} • ${wines.length} ${wines.length > 1 ? 'locations' : 'location'}</div>
+                            </div>
+                            <button onclick="event.stopPropagation(); showWineDetail('${wines.map(w => w.id).join(',')}')" style="width: auto; padding: 8px 16px; background: #722f37;">
+                                View Locations →
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            document.getElementById('vintageDetailModal').style.display = 'flex';
+        };
+        
+        window.closeVintageDetail = function() {
+            document.getElementById('vintageDetailModal').style.display = 'none';
+        };
+        
+        window.showWineDetail = function(idsString) {
+            const ids = idsString.split(',');
+            const wineInstances = wines.filter(w => ids.includes(w.id));
+            const wine = wineInstances[0]; // Get first instance for main info
+            
+            document.getElementById('detailWineName').textContent = wine.name;
+            
+            const totalQuantity = wineInstances.reduce((sum, w) => sum + w.quantity, 0);
+            
+            document.getElementById('wineDetailContent').innerHTML = `
+                ${wine.photo ? `<img src="${wine.photo}" style="width: 100%; max-height: 300px; object-fit: contain; border-radius: 8px; margin-bottom: 20px;">` : ''}
+                
+                <div style="margin-bottom: 20px;">
+                    <h4 style="color: #722f37; margin-bottom: 10px;">Wine Details</h4>
+                    ${wine.vintage ? `<p><strong>Vintage:</strong> ${wine.vintage}</p>` : ''}
+                    ${wine.type ? `<p><strong>Type:</strong> ${wine.type}</p>` : ''}
+                    ${wine.country ? `<p><strong>Country:</strong> ${wine.country}</p>` : ''}
+                    ${wine.region ? `<p><strong>Region:</strong> ${wine.region}</p>` : ''}
+                    ${wine.sub_region ? `<p><strong>Sub-region:</strong> ${wine.sub_region}</p>` : ''}
+                    <p><strong>Total Quantity:</strong> ${totalQuantity} ${totalQuantity > 1 ? 'bottles' : 'bottle'}</p>
+                    ${wine.notes ? `<p><strong>Notes:</strong> ${wine.notes}</p>` : ''}
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <h4 style="color: #722f37; margin-bottom: 10px;">Storage Locations</h4>
+                    ${wineInstances.map(w => `
+                        <div style="background: #f9fafb; padding: 12px; border-radius: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-weight: 600;">${w.location}</div>
+                                <div style="font-size: 0.9em; color: #6b7280;">${w.quantity} ${w.quantity > 1 ? 'bottles' : 'bottle'}</div>
+                            </div>
+                            <div style="display: flex; gap: 6px;">
+                                <button onclick="event.stopPropagation(); closeWineDetail(); closeVintageDetail(); editWine('${w.id}')" style="width: auto; padding: 6px 12px; background: #3b82f6; font-size: 0.85em;">Edit</button>
+                                <button onclick="event.stopPropagation(); markConsumed('${w.id}')" class="consumed-btn" style="width: auto; padding: 6px 12px; font-size: 0.85em;">Consumed</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            document.getElementById('wineDetailModal').style.display = 'flex';
+        };
+        
+        window.closeWineDetail = function() {
+            document.getElementById('wineDetailModal').style.display = 'none';
+        };
+        
+        window.clearFilters = function() {
+            document.getElementById('searchBox').value = '';
+            document.getElementById('filterType').value = '';
+            document.getElementById('filterCountry').value = '';
+            document.getElementById('filterRegion').value = '';
+            document.getElementById('filterSubRegion').value = '';
+            document.getElementById('filterVintage').value = '';
+            renderWines();
+        };
+        
+        // Add filter change listeners
+        setTimeout(() => {
+            ['filterType', 'filterCountry', 'filterRegion', 'filterSubRegion', 'filterVintage'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('change', renderWines);
+            });
+            
+            // Add search box listener with debounce
+            const searchBox = document.getElementById('searchBox');
+            if (searchBox) {
+                let searchTimeout;
+                searchBox.addEventListener('input', () => {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(renderWines, 300); // Debounce 300ms
+                });
+            }
+        }, 1000);
+
+        // Render locations
+        function renderLocations() {
+            const container = document.getElementById('locationsList');
+            
+            if (locations.length === 0) {
+                container.innerHTML = '<div class="empty-state">No locations yet.</div>';
+                return;
+            }
+            
+            const parentLocations = locations.filter(l => l.is_parent);
+            
+            container.innerHTML = parentLocations.map(parent => {
+                const children = locations.filter(l => l.parent_id === parent.id);
+                
+                return `
+                    <div style="margin-bottom: 20px; border: 2px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
+                        <div class="location-item" style="background: #f3f4f6; font-weight: 600;">
+                            <div>📍 ${parent.name}</div>
+                            <button class="delete-btn" onclick="deleteLocation('${parent.id}')">Delete</button>
+                        </div>
+                        ${children.length > 0 ? children.map(child => `
+                            <div class="location-item" style="padding-left: 40px; border-top: 1px solid #e5e7eb;">
+                                <div>↳ ${child.name}</div>
+                                <button class="delete-btn" onclick="deleteLocation('${child.id}')">Delete</button>
+                            </div>
+                        `).join('') : '<div style="padding: 15px 15px 15px 40px; color: #9ca3af; font-style: italic;">No sub-locations</div>'}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Update location dropdown
+        function updateLocationDropdown() {
+            const parentDropdown = document.getElementById('parentLocation');
+            const parentLocations = locations.filter(l => l.is_parent);
+            
+            parentDropdown.innerHTML = '<option value="">Select main location...</option>' +
+                parentLocations.map(loc => `<option value="${loc.id}">${loc.name}</option>`).join('');
+        }
+
+        function updateAutocompleteOptions() {
+            // Wine names
+            const wineNames = [...new Set(wines.map(w => w.name))].sort();
+            const wineNameList = document.getElementById('wineNameList');
+            if (wineNameList) {
+                wineNameList.innerHTML = wineNames.map(name => `<option value="${name}">`).join('');
+            }
+            
+            // Countries
+            const countries = [...new Set(wines.map(w => w.country).filter(Boolean))].sort();
+            const countryList = document.getElementById('countryList');
+            if (countryList) {
+                countryList.innerHTML = countries.map(c => `<option value="${c}">`).join('');
+            }
+            
+            // Regions
+            const regions = [...new Set(wines.map(w => w.region).filter(Boolean))].sort();
+            const regionList = document.getElementById('regionList');
+            if (regionList) {
+                regionList.innerHTML = regions.map(r => `<option value="${r}">`).join('');
+            }
+            
+            // Sub-regions
+            const subRegions = [...new Set(wines.map(w => w.sub_region).filter(Boolean))].sort();
+            const subRegionList = document.getElementById('subRegionList');
+            if (subRegionList) {
+                subRegionList.innerHTML = subRegions.map(sr => `<option value="${sr}">`).join('');
+            }
+        }
+
+            // Friend System Functions
+            async function loadFriends() {
+                try {
+                    // Load accepted friends
+                    const { data: friendsData } = await supabase
+                        .from('friendships')
+                        .select('*, user_profiles!friendships_friend_id_fkey(email)')
+                        .or(`user_id.eq.${currentUser.id},friend_id.eq.${currentUser.id}`)
+                        .eq('status', 'accepted');
+                    
+                    friends = friendsData || [];
+                    
+                    // Load pending requests (where I'm the recipient)
+                    const { data: requestsData } = await supabase
+                        .from('friendships')
+                        .select('*, user_profiles!friendships_user_id_fkey(email)')
+                        .eq('friend_id', currentUser.id)
+                        .eq('status', 'pending');
+                    
+                    friendRequests = requestsData || [];
+                    
+                    renderFriends();
+                    renderFriendRequests();
+                } catch (error) {
+                    console.error('Error loading friends:', error);
+                }
+            }
+
+            document.getElementById('sendFriendRequestBtn').addEventListener('click', async () => {
+                const email = document.getElementById('friendEmail').value.trim();
+                if (!email) return;
+                
+                try {
+                    // Find user by email
+                    const { data: profiles } = await supabase
+                        .from('user_profiles')
+                        .select('*')
+                        .eq('email', email)
+                        .limit(1);
+                    
+                    if (!profiles || profiles.length === 0) {
+                        document.getElementById('friendSearchResult').innerHTML = 
+                            '<div style="color: #991b1b;">User not found</div>';
+                        return;
+                    }
+                    
+                    const friendProfile = profiles[0];
+                    
+                    if (friendProfile.id === currentUser.id) {
+                        document.getElementById('friendSearchResult').innerHTML = 
+                            '<div style="color: #991b1b;">You cannot add yourself</div>';
+                        return;
+                    }
+                    
+                    // Send friend request
+                    const { error } = await supabase.from('friendships').insert([{
+                        user_id: currentUser.id,
+                        friend_id: friendProfile.id,
+                        status: 'pending'
+                    }]);
+                    
+                    if (error) {
+                        if (error.code === '23505') {
+                            document.getElementById('friendSearchResult').innerHTML = 
+                                '<div style="color: #78350f;">Friend request already sent</div>';
+                        } else {
+                            throw error;
+                        }
+                    } else {
+                        document.getElementById('friendSearchResult').innerHTML = 
+                            '<div style="color: #065f46;">✓ Friend request sent!</div>';
+                        document.getElementById('friendEmail').value = '';
+                    }
+                } catch (error) {
+                    console.error('Error sending friend request:', error);
+                    document.getElementById('friendSearchResult').innerHTML = 
+                        '<div style="color: #991b1b;">Failed to send request</div>';
+                }
+            });
+
+            async function acceptFriendRequest(requestId) {
+                try {
+                    const { error } = await supabase
+                        .from('friendships')
+                        .update({ status: 'accepted', responded_at: new Date().toISOString() })
+                        .eq('id', requestId);
+                    
+                    if (!error) {
+                        await loadFriends();
+                    }
+                } catch (error) {
+                    console.error('Error accepting request:', error);
+                }
+            }
+
+            async function rejectFriendRequest(requestId) {
+                try {
+                    const { error } = await supabase
+                        .from('friendships')
+                        .delete()
+                        .eq('id', requestId);
+                    
+                    if (!error) {
+                        await loadFriends();
+                    }
+                } catch (error) {
+                    console.error('Error rejecting request:', error);
+                }
+            }
+
+            async function removeFriend(friendshipId) {
+                if (!confirm('Remove this friend?')) return;
+                
+                try {
+                    const { error } = await supabase
+                        .from('friendships')
+                        .delete()
+                        .eq('id', friendshipId);
+                    
+                    if (!error) {
+                        await loadFriends();
+                    }
+                } catch (error) {
+                    console.error('Error removing friend:', error);
+                }
+            }
+
+            async function viewFriendCollection(friendId, friendEmail) {
+                try {
+                    currentFriendView = friendId;
+                    document.getElementById('friendCollectionTitle').textContent = `${friendEmail}'s Collection`;
+                    document.getElementById('friendRequestsSection').style.display = 'none';
+                    document.querySelector('#friendsTab > .card').style.display = 'none';
+                    document.getElementById('friendCollectionView').style.display = 'block';
+                    
+                    // Load friend's wines
+                    const { data: friendWines } = await supabase
+                        .from('wines')
+                        .select('*')
+                        .eq('user_id', friendId)
+                        .order('date_added', { ascending: false });
+                    
+                    const { data: friendConsumed } = await supabase
+                        .from('consumed_wines')
+                        .select('*')
+                        .eq('user_id', friendId);
+                    
+                    // Update stats
+                    const totalBottles = (friendWines || []).reduce((sum, w) => sum + w.quantity, 0);
+                    document.getElementById('friendTotalCount').textContent = totalBottles;
+                    document.getElementById('friendConsumedCount').textContent = (friendConsumed || []).length;
+                    const uniqueNames = new Set((friendWines || []).map(w => w.name.toLowerCase()));
+                    document.getElementById('friendUniqueWines').textContent = uniqueNames.size;
+                    
+                    // Render wines
+                    renderFriendWines(friendWines || []);
+                } catch (error) {
+                    console.error('Error loading friend collection:', error);
+                }
+            }
+
+            window.closeFriendCollection = function() {
+                currentFriendView = null;
+                document.getElementById('friendRequestsSection').style.display = 'block';
+                document.querySelector('#friendsTab > .card').style.display = 'block';
+                document.getElementById('friendCollectionView').style.display = 'none';
+            };
+
+            function renderFriendRequests() {
+                const container = document.getElementById('friendRequestsList');
+                
+                if (friendRequests.length === 0) {
+                    container.innerHTML = '<div style="color: #9ca3af; padding: 20px; text-align: center;">No pending requests</div>';
+                    return;
+                }
+                
+                container.innerHTML = friendRequests.map(req => `
+                    <div style="background: #f9fafb; border: 2px solid #e5e7eb; border-radius: 8px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>${req.user_profiles.email}</strong> wants to connect
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button onclick="acceptFriendRequest('${req.id}')" style="width: auto; padding: 8px 16px; background: #10b981; font-size: 14px;">Accept</button>
+                            <button onclick="rejectFriendRequest('${req.id}')" style="width: auto; padding: 8px 16px; background: #ef4444; font-size: 14px;">Reject</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            function renderFriends() {
+                const container = document.getElementById('friendsList');
+                
+                if (friends.length === 0) {
+                    container.innerHTML = '<div style="color: #9ca3af; padding: 20px; text-align: center;">No friends yet. Add friends to share your collection!</div>';
+                    return;
+                }
+                
+                container.innerHTML = friends.map(friendship => {
+                    const friendId = friendship.user_id === currentUser.id ? friendship.friend_id : friendship.user_id;
+                    const friendEmail = friendship.user_profiles?.email || 'Unknown';
+                    
+                    return `
+                        <div style="background: #f9fafb; border: 2px solid #e5e7eb; border-radius: 8px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                            <div style="flex: 1;">
+                                <strong>${friendEmail}</strong>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button onclick="viewFriendCollection('${friendId}', '${friendEmail}')" style="width: auto; padding: 8px 16px; background: #667eea; font-size: 14px;">View Collection</button>
+                                <button onclick="removeFriend('${friendship.id}')" style="width: auto; padding: 8px 16px; background: #ef4444; font-size: 14px;">Remove</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            function renderFriendWines(friendWines) {
+                const container = document.getElementById('friendWinesList');
+                
+                if (friendWines.length === 0) {
+                    container.innerHTML = '<div style="color: #9ca3af; padding: 20px; text-align: center;">No wines in collection</div>';
+                    return;
+                }
+                
+                container.innerHTML = friendWines.map(wine => `
+                    <div class="wine-item">
+                        ${wine.photo ? `<img src="${wine.photo}" style="width: 100%; max-height: 150px; object-fit: cover; border-radius: 6px; margin-bottom: 10px;">` : ''}
+                        <div class="wine-name">${wine.name}</div>
+                        <div class="wine-details">
+                            ${wine.vintage ? `${wine.vintage} • ` : ''}
+                            ${wine.type ? `${wine.type} • ` : ''}
+                            ${wine.country ? `${wine.country} • ` : ''}
+                            ${wine.quantity > 1 ? `${wine.quantity} bottles` : '1 bottle'}
+                        </div>
+                        <span class="location-badge">${wine.location}</span>
+                        ${wine.notes ? `<div style="margin-top: 10px; font-size: 0.9em; color: #6b7280;">${wine.notes}</div>` : ''}
+                    </div>
+                `).join('');
+            }
+
+            window.acceptFriendRequest = acceptFriendRequest;
+            window.rejectFriendRequest = rejectFriendRequest;
+            window.removeFriend = removeFriend;
+            window.viewFriendCollection = viewFriendCollection;
+
+            // Consumed Wines functions
+        function renderConsumedWines() {
+            const container = document.getElementById('consumedList');
+            
+            if (consumedWines.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div style="font-size: 3em; margin-bottom: 10px;">🥂</div>
+                        <p>No consumed wines yet.</p>
+                        <p>Mark a wine as consumed to see it here!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Sort by consumed date (most recent first)
+            const sortedConsumed = [...consumedWines].sort((a, b) => 
+                new Date(b.consumed_date) - new Date(a.consumed_date)
+            );
+            
+            container.innerHTML = sortedConsumed.map(wine => {
+                const consumedDate = new Date(wine.consumed_date).toLocaleDateString();
+                return `
+                    <div class="wine-item">
+                        ${wine.photo ? `<img src="${wine.photo}" style="width: 100%; max-height: 150px; object-fit: cover; border-radius: 6px; margin-bottom: 10px;">` : ''}
+                        <div class="wine-name">${wine.name}</div>
+                        <div class="wine-details">
+                            ${wine.vintage ? `${wine.vintage} • ` : ''}
+                            ${wine.type ? `${wine.type} • ` : ''}
+                            Consumed on ${consumedDate}
+                        </div>
+                        ${wine.consumed_notes ? `
+                            <div style="background: #fef3c7; padding: 10px; border-radius: 6px; margin-top: 10px;">
+                                <strong>Tasting Notes:</strong> ${wine.consumed_notes}
+                            </div>
+                        ` : ''}
+                        <div class="wine-actions">
+                            <button class="delete-btn" onclick="deleteConsumedWine('${wine.id}')">Delete from History</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.deleteConsumedWine = async function(id) {
+            if (!confirm('Delete this wine from history?')) return;
+            
+            try {
+                const { error } = await supabase.from('consumed_wines').delete().eq('id', id);
+                if (error) throw error;
+                
+                consumedWines = consumedWines.filter(w => w.id !== id);
+                renderConsumedWines();
+                updateStats();
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to delete: ' + error.message);
+            }
+        };
+
+        // Data Cleanup Function
+        window.cleanupAllData = async function() {
+            if (!confirm('This will standardize capitalization and remove extra spaces from all your wine data. Continue?')) {
+                return;
+            }
+            
+            const resultDiv = document.getElementById('cleanupResult');
+            resultDiv.innerHTML = '<p style="color: #3b82f6;">Cleaning up data...</p>';
+            
+            try {
+                let updated = 0;
+                
+                // Clean up each wine
+                for (const wine of wines) {
+                    const cleanedData = {
+                        name: normalizeText(wine.name),
+                        country: normalizeWineText(wine.country || ''),
+                        region: normalizeWineText(wine.region || ''),
+                        sub_region: normalizeWineText(wine.sub_region || '')
+                    };
+                    
+                    // Check if anything changed
+                    if (cleanedData.name !== wine.name || 
+                        cleanedData.country !== wine.country ||
+                        cleanedData.region !== wine.region ||
+                        cleanedData.sub_region !== wine.sub_region) {
+                        
+                        const { error } = await supabase
+                            .from('wines')
+                            .update(cleanedData)
+                            .eq('id', wine.id);
+                        
+                        if (!error) {
+                            updated++;
+                            // Update local copy
+                            wine.name = cleanedData.name;
+                            wine.country = cleanedData.country;
+                            wine.region = cleanedData.region;
+                            wine.sub_region = cleanedData.sub_region;
+                        }
+                    }
+                }
+                
+                if (updated > 0) {
+                    resultDiv.innerHTML = `<p style="color: #10b981; font-weight: 600;">✓ Cleaned up ${updated} wine${updated > 1 ? 's' : ''}!</p>`;
+                    updateUI();
+                } else {
+                    resultDiv.innerHTML = '<p style="color: #6b7280;">✓ No duplicates found - your data is already clean!</p>';
+                }
+            } catch (error) {
+                console.error('Cleanup error:', error);
+                resultDiv.innerHTML = '<p style="color: #dc2626;">Error during cleanup. Please try again.</p>';
+            }
+        };
+
+        // Summary/Analytics functions
+        // Initialize
+            loadData();
+        }); // End DOMContentLoaded
+    </script>
+</body>
+</html>
