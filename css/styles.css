@@ -1,0 +1,650 @@
+﻿* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #722f37 0%, #2d1b1e 100%);
+    min-height: 100vh;
+    padding: 15px;
+    margin: 0;
+    overflow-x: hidden;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+header {
+    color: white;
+    margin-bottom: 20px;
+}
+
+h1 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    opacity: 0.9;
+    font-size: 1.1em;
+}
+
+.tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.tab-btn {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: 2px solid white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    flex: 1 1 auto;
+    min-width: 120px;
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 8px;
+    }
+    
+    .container {
+        padding: 0;
+    }
+    
+    header {
+        margin-bottom: 12px;
+    }
+    
+    h1 {
+        font-size: 1.4em !important;
+    }
+    
+    h2 {
+        font-size: 1.1em !important;
+    }
+    
+    .subtitle {
+        font-size: 0.8em !important;
+    }
+    
+    .tabs {
+        gap: 4px;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+    }
+    
+    .tab-btn {
+        padding: 6px 8px;
+        font-size: 11px;
+        min-width: 70px;
+    }
+
+    .stats {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px;
+    }
+
+    .stat-number {
+        font-size: 1.3em;
+    }
+
+    .stat-label {
+        font-size: 0.8em;
+    }
+    
+    .card {
+        padding: 12px;
+        margin-bottom: 12px;
+    }
+    
+    .wine-item-compact {
+        padding: 6px 8px;
+        margin-bottom: 4px;
+    }
+    
+    .wine-photo {
+        width: 35px !important;
+        height: 35px !important;
+        font-size: 1.2em !important;
+    }
+    
+    .wine-name-compact {
+        font-size: 0.85em;
+    }
+    
+    .wine-details-compact {
+        font-size: 0.7em;
+    }
+    
+    .wine-actions-compact button {
+        padding: 3px 6px;
+        font-size: 0.65em;
+    }
+    
+    .dashboard-grid {
+        gap: 10px;
+    }
+    
+    .dashboard-box {
+        padding: 16px;
+        min-height: 100px;
+    }
+    
+    .dashboard-icon {
+        font-size: 36px;
+    }
+    
+    .dashboard-number {
+        font-size: 28px;
+    }
+    
+    .dashboard-label {
+        font-size: 13px;
+    }
+}
+
+.tab-btn:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+.tab-btn.active {
+    background: white;
+    color: #722f37;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.card {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    margin-bottom: 20px;
+}
+
+.card h2 {
+    color: #667eea;
+    margin-bottom: 20px;
+}
+
+.main-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 20px;
+}
+
+@media (max-width: 768px) {
+    .main-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #333;
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+button {
+    background: linear-gradient(135deg, #722f37 0%, #8b3a44 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    font-weight: 600;
+    width: 100%;
+    box-shadow: 0 4px 12px rgba(114, 47, 55, 0.3);
+    transition: all 0.3s;
+}
+
+button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(114, 47, 55, 0.4);
+}
+
+button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.wine-list {
+    display: grid;
+    gap: 15px;
+}
+
+.wine-item {
+    background: #f9fafb;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.wine-item:hover {
+    border-color: #667eea;
+}
+
+.wine-item-compact {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.2s;
+}
+
+.wine-item-compact:hover {
+    border-color: #667eea;
+    box-shadow: 0 2px 6px rgba(102, 126, 234, 0.15);
+}
+
+.wine-item-compact .wine-photo {
+    width: 45px;
+    height: 45px;
+    object-fit: cover;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.wine-item-compact .wine-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.wine-item-compact .wine-name-compact {
+    font-size: 0.95em;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 2px;
+}
+
+.wine-item-compact .wine-details-compact {
+    font-size: 0.8em;
+    color: #6b7280;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.wine-item-compact .wine-actions-compact {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.wine-item-compact button {
+    padding: 5px 10px;
+    font-size: 0.75em;
+    width: auto;
+}
+
+.wine-name {
+    font-size: 1.2em;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 5px;
+}
+
+.wine-details {
+    color: #6b7280;
+    font-size: 0.9em;
+    margin-bottom: 10px;
+}
+
+.wine-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.wine-actions button {
+    width: auto;
+    padding: 8px 16px;
+    font-size: 14px;
+}
+
+.delete-btn {
+    background: #ef4444;
+}
+
+.delete-btn:hover {
+    background: #dc2626;
+}
+
+.consumed-btn {
+    background: #f59e0b;
+}
+
+.consumed-btn:hover {
+    background: #d97706;
+}
+
+.location-badge {
+    display: inline-block;
+    background: #dbeafe;
+    color: #1e40af;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.85em;
+    font-weight: 600;
+    margin-top: 5px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    color: #9ca3af;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.stat-number {
+    font-size: 2em;
+    font-weight: bold;
+    color: #667eea;
+}
+
+.stat-label {
+    color: #6b7280;
+    margin-top: 5px;
+}
+
+.location-list {
+    display: grid;
+    gap: 10px;
+}
+
+.location-item {
+    background: #f9fafb;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.location-item button {
+    width: auto;
+    padding: 8px 16px;
+    font-size: 14px;
+}
+
+.loading {
+    text-align: center;
+    padding: 40px;
+    color: #667eea;
+    font-size: 1.2em;
+}
+
+.summary-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.summary-card h3 {
+    color: #667eea;
+    margin-bottom: 15px;
+    font-size: 1.1em;
+}
+
+.summary-list {
+    display: grid;
+    gap: 8px;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: #f9fafb;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.summary-item:hover {
+    background: #e5e7eb;
+    transform: translateX(4px);
+}
+
+.summary-item-label {
+    font-weight: 500;
+    color: #1f2937;
+}
+
+.summary-item-count {
+    background: #722f37;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.9em;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.dashboard-box {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    min-height: 140px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.dashboard-box:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.dashboard-box:active {
+    transform: translateY(-2px);
+}
+
+.dashboard-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+}
+
+.dashboard-number {
+    font-size: 36px;
+    font-weight: 700;
+    color: #722f37;
+    margin-bottom: 4px;
+}
+
+.dashboard-label {
+    font-size: 15px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.dashboard-add {
+    background: linear-gradient(135deg, #722f37 0%, #8b3a44 100%);
+    color: white;
+}
+
+.dashboard-add .dashboard-icon {
+    font-size: 56px;
+}
+
+.dashboard-add .dashboard-label {
+    color: white;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .dashboard-grid {
+        gap: 12px;
+    }
+
+    .dashboard-box {
+        padding: 20px;
+        min-height: 120px;
+    }
+
+    .dashboard-icon {
+        font-size: 40px;
+    }
+
+    .dashboard-number {
+        font-size: 32px;
+    }
+
+    .dashboard-label {
+        font-size: 14px;
+    }
+
+    .dashboard-add .dashboard-icon {
+        font-size: 48px;
+    }
+
+    .dashboard-add .dashboard-label {
+        font-size: 16px;
+    }
+}
+
+.camera-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.9);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.camera-modal.active {
+    display: flex;
+}
+
+.camera-container {
+    position: relative;
+    max-width: 90%;
+    max-height: 90%;
+}
+
+#cameraVideo {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+
+.camera-controls {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 15px;
+}
+
+.camera-controls button {
+    width: auto;
+    padding: 15px 30px;
+    font-size: 18px;
+}
+
+#captureBtn {
+    background: #10b981;
+}
+
+#closeCameraBtn {
+    background: #ef4444;
+}
+
+/* Shown inside a tab when that feature fails to load or crashes */
+.feature-error {
+    background: #fee2e2;
+    color: #991b1b;
+    border-left: 4px solid #dc2626;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 14px;
+}
+
+.feature-error code {
+    display: block;
+    margin-top: 6px;
+    font-size: 12px;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
