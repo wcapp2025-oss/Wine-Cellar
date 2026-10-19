@@ -194,6 +194,14 @@ input[type="search"] { background: var(--surface-2); border-color: transparent; 
     background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: 14px; text-align: center;
 }
 
+.region-dots {
+    width: 40px; flex: 0 0 auto; display: flex; flex-wrap: wrap; gap: 4px;
+    justify-content: center; align-content: center;
+}
+.region-dots .dot { width: 12px; height: 12px; }
+.chevron { color: var(--muted); font-size: 22px; line-height: 1; margin-left: -4px; }
+.region-title { font-size: 24px; margin: 4px 4px 0; }
+
 .empty-state { text-align: center; color: var(--muted); padding: 48px 16px; }
 .empty-state .big { font-size: 44px; margin-bottom: 8px; }
 

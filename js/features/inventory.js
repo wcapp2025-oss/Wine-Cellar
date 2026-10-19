@@ -3,7 +3,7 @@
 
 import { state, emit } from '../core/state.js';
 import { registerActions, openSheet, closeSheet, showTab, toast } from '../core/ui.js';
-import { byId, escapeHtml, bottles, uniqueSorted, optionsHtml, bottleSvg } from '../core/utils.js';
+import { byId, escapeHtml, bottles, uniqueSorted, optionsHtml, bottleSvg, typeKey } from '../core/utils.js';
 import { markConsumed } from '../core/data.js';
 
 const EXTRA_FILTERS = [
@@ -15,7 +15,13 @@ const EXTRA_FILTERS = [
 
 const filters = { type: '', country: '', region: '', sub_region: '', vintage: '' };
 
+const NO_REGION = 'No region';
+let currentRegion = null; // null = showing the region list
+
 const groupKey = w => `${w.name}|${w.region}|${w.type}`;
+const regionOf = w => w.region || NO_REGION;
+// Lowercase without accents, so "chateau" finds "Château"
+const plain = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 const sumQty = list => list.reduce((sum, w) => sum + (w.quantity || 0), 0);
 
 function thumbHtml(wine) {
@@ -25,10 +31,10 @@ function thumbHtml(wine) {
 }
 
 function filteredWines() {
-    const search = byId('searchBox').value.trim().toLowerCase();
+    const search = plain(byId('searchBox').value.trim());
     return state.wines.filter(w => {
         if (search && !['name', 'region', 'sub_region', 'vintage', 'country']
-            .some(f => w[f] != null && String(w[f]).toLowerCase().includes(search))) return false;
+            .some(f => w[f] != null && plain(String(w[f])).includes(search))) return false;
         if (filters.type && w.type !== filters.type) return false;
         return EXTRA_FILTERS.every(({ field }) => !filters[field] || String(w[field] ?? '') === filters[field]);
     });
@@ -49,9 +55,26 @@ function renderWines() {
         return;
     }
 
+    const matching = filteredWines();
+    const searching = byId('searchBox').value.trim() !== '';
+
+    if (matching.length === 0) {
+        container.innerHTML = `<div class="empty-state"><div class="big">🔍</div><p>No wines match.</p></div>`;
+        return;
+    }
+
+    // Start page: regions to tap into. Searching skips straight to matching wines.
+    if (!searching && currentRegion === null) return renderRegions(container, matching);
+
+    const inView = searching ? matching : matching.filter(w => regionOf(w) === currentRegion);
+    if (inView.length === 0) {
+        currentRegion = null;
+        return renderRegions(container, matching);
+    }
+
     // Group by name + region + type
     const groups = new Map();
-    for (const wine of filteredWines()) {
+    for (const wine of inView) {
         const key = groupKey(wine);
         if (!groups.has(key)) groups.set(key, { ...wine, key, total: 0, vintages: new Set() });
         const g = groups.get(key);
@@ -59,24 +82,23 @@ function renderWines() {
         g.vintages.add(wine.vintage || 'NV');
     }
 
-    if (groups.size === 0) {
-        container.innerHTML = `<div class="empty-state"><div class="big">🔍</div><p>No wines match.</p></div>`;
-        return;
-    }
-
     // Section per region, A–Z
     const byRegion = new Map();
     [...groups.values()]
         .sort((a, b) => (a.region || '~').localeCompare(b.region || '~') || (a.name || '').localeCompare(b.name || ''))
         .forEach(g => {
-            const region = g.region || 'No region';
+            const region = regionOf(g);
             if (!byRegion.has(region)) byRegion.set(region, []);
             byRegion.get(region).push(g);
         });
 
-    container.innerHTML = [...byRegion.entries()].map(([region, list]) => `
-        <div class="list-group-title">${escapeHtml(region)}</div>
-        <div class="list-group">
+    const header = searching ? '' : `
+        <button class="back-link" data-action="all-regions">‹ All regions</button>
+        <h2 class="region-title">${escapeHtml(currentRegion)}</h2>`;
+
+    container.innerHTML = header + [...byRegion.entries()].map(([region, list]) => `
+        ${searching ? `<div class="list-group-title">${escapeHtml(region)}</div>` : ''}
+        <div class="list-group"${searching ? '' : ' style="margin-top:10px"'}>
             ${list.map(g => {
                 const vintageText = g.vintages.size === 1 ? [...g.vintages][0] : `${g.vintages.size} vintages`;
                 const sub = [vintageText, g.sub_region, g.country].filter(Boolean).map(escapeHtml).join(' · ');
@@ -91,6 +113,43 @@ function renderWines() {
                     </button>`;
             }).join('')}
         </div>`).join('');
+}
+
+// Regions grouped under their country, each with its wine and bottle count.
+function renderRegions(container, wines) {
+    const countries = new Map();
+    for (const w of wines) {
+        const country = w.country || 'Other';
+        if (!countries.has(country)) countries.set(country, new Map());
+        const regions = countries.get(country);
+        const region = regionOf(w);
+        if (!regions.has(region)) regions.set(region, { bottles: 0, names: new Set(), types: new Set() });
+        const r = regions.get(region);
+        r.bottles += w.quantity || 0;
+        r.names.add(`${w.name}|${w.type}`);
+        if (w.type) r.types.add(w.type);
+    }
+
+    const sortedCountries = [...countries.keys()].sort((a, b) => a === 'Other' ? 1 : b === 'Other' ? -1 : a.localeCompare(b));
+
+    container.innerHTML = sortedCountries.map(country => {
+        const regions = [...countries.get(country).entries()]
+            .sort(([a], [b]) => a === NO_REGION ? 1 : b === NO_REGION ? -1 : a.localeCompare(b));
+        return `
+            <div class="list-group-title">${escapeHtml(country)}</div>
+            <div class="list-group">
+                ${regions.map(([region, r]) => `
+                    <button class="wine-row" data-action="open-region" data-region="${escapeHtml(region)}">
+                        <div class="region-dots">${[...r.types].map(t => `<i class="dot dot-${typeKey(t)}"></i>`).join('')}</div>
+                        <div class="wine-main">
+                            <div class="wine-title">${escapeHtml(region)}</div>
+                            <div class="wine-sub">${r.names.size} ${r.names.size === 1 ? 'wine' : 'wines'}</div>
+                        </div>
+                        <span class="count-pill">${r.bottles}</span>
+                        <span class="chevron">›</span>
+                    </button>`).join('')}
+            </div>`;
+    }).join('');
 }
 
 function updateFiltersChip() {
@@ -178,6 +237,16 @@ export function init({ on }) {
 
     registerActions({
         'show-wine': showWine,
+        'open-region': ({ region }) => {
+            currentRegion = region;
+            renderWines();
+            window.scrollTo(0, 0);
+        },
+        'all-regions': () => {
+            currentRegion = null;
+            renderWines();
+            window.scrollTo(0, 0);
+        },
         'open-filters': openFilters,
         'filter-type': ({ type }) => {
             filters.type = type;
