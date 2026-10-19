@@ -12,6 +12,7 @@ import { startAuth } from './core/auth.js';
 const FEATURE_TABS = {
     inventory: 'wines',
     cellar: 'cellar',
+    'bottle-actions': 'cellar',
     'add-wine': 'addWine',
     'label-scanner': 'addWine',
     consumed: 'consumed',

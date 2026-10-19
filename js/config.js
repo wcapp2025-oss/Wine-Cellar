@@ -13,6 +13,7 @@ export const PASSWORD_RESET_REDIRECT = 'https://wcapp2025-oss.github.io/Wine-Cel
 export const FEATURES = {
     inventory: true,
     cellar: true,
+    'bottle-actions': true,
     'add-wine': true,
     'label-scanner': true,
     dashboard: true,

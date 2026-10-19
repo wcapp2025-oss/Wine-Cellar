@@ -92,6 +92,52 @@ export async function markConsumed(id, notes) {
     emit('data:changed');
 }
 
+// Moves `count` bottles of one entry to another fridge/area and shelf.
+// Moving all of them just changes the entry's location. Moving some adds them to the
+// destination (merging with the same wine already there) BEFORE reducing the original,
+// so a failure halfway can never lose bottles.
+export async function moveBottles(id, count, parentName, shelfName = '') {
+    const wine = state.wines.find(w => w.id === id);
+    if (!wine) throw new Error('Wine not found');
+    count = Math.min(Math.max(1, count), wine.quantity || 1);
+
+    const where = {
+        parent_location: parentName,
+        sub_location: shelfName,
+        location: shelfName ? `${parentName} - ${shelfName}` : parentName,
+    };
+    const sameWine = w => w.id !== id && w.name === wine.name && w.vintage === wine.vintage
+        && w.type === wine.type && w.region === wine.region
+        && w.parent_location === parentName && (w.sub_location || '') === shelfName;
+    const target = state.wines.find(sameWine);
+
+    if (target) {
+        const quantity = (target.quantity || 0) + count;
+        check(await supabase.from('wines').update({ quantity }).eq('id', target.id));
+        target.quantity = quantity;
+    } else if (count === wine.quantity) {
+        check(await supabase.from('wines').update(where).eq('id', id));
+        Object.assign(wine, where);
+        emit('data:changed');
+        return;
+    } else {
+        const copy = { ...wine, ...where, id: Date.now().toString(), quantity: count, date_added: new Date().toISOString() };
+        check(await supabase.from('wines').insert([copy]));
+        state.wines.unshift(copy);
+    }
+
+    // Take the moved bottles out of the original spot
+    if (count === wine.quantity) {
+        check(await supabase.from('wines').delete().eq('id', id));
+        state.wines = state.wines.filter(w => w.id !== id);
+    } else {
+        const quantity = wine.quantity - count;
+        check(await supabase.from('wines').update({ quantity }).eq('id', id));
+        wine.quantity = quantity;
+    }
+    emit('data:changed');
+}
+
 export async function deleteConsumed(id) {
     check(await supabase.from('consumed_wines').delete().eq('id', id));
     state.consumedWines = state.consumedWines.filter(w => w.id !== id);

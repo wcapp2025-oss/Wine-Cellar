@@ -84,9 +84,12 @@ function shelfHtml(shelf, clickable = true) {
         .sort((a, b) => (a.type || '~').localeCompare(b.type || '~') || (a.name || '').localeCompare(b.name || ''))
         .forEach(w => { for (let i = 0; i < (w.quantity || 0); i++) units.push(w); });
 
+    // On the shelf page (not clickable as a whole), each bottle can be tapped on its own
     const shown = units.slice(0, MAX_PER_SHELF);
-    const bottlesHtml = shown.map(w =>
-        `<span class="bottle${highlighted.has(w.id) ? ' highlight' : ''}">${bottleSvg(w.type)}</span>`).join('');
+    const bottlesHtml = shown.map(w => clickable
+        ? `<span class="bottle${highlighted.has(w.id) ? ' highlight' : ''}">${bottleSvg(w.type)}</span>`
+        : `<button class="bottle" data-action="cellar-wine" data-id="${escapeHtml(w.id)}" aria-label="${escapeHtml(w.name)}">${bottleSvg(w.type)}</button>`
+    ).join('');
     const more = units.length > shown.length ? `<span class="bottle-more">+${units.length - shown.length}</span>` : '';
 
     const inner = `
@@ -110,21 +113,15 @@ function renderFridge(fridge) {
 // ----- Level 3: one shelf, as a list -----
 
 function renderShelf(fridge, shelf) {
-    // Group the same wine + vintage together
-    const groups = new Map();
-    shelf.wines.forEach(w => {
-        const key = `${w.name}|${w.vintage}|${w.type}`;
-        if (!groups.has(key)) groups.set(key, { ...w, qty: 0 });
-        groups.get(key).qty += w.quantity || 0;
-    });
-    const list = [...groups.values()].sort((a, b) =>
+    // One row per entry, so tapping it acts on exactly those bottles in this spot
+    const list = [...shelf.wines].sort((a, b) =>
         (a.type || '~').localeCompare(b.type || '~') || (a.name || '').localeCompare(b.name || ''));
 
     return `
         <button class="back-link" data-action="cellar-back">‹ ${escapeHtml(fridge.name)}</button>
         <header class="page-header" style="padding-top:4px">
             <h1>${escapeHtml(shelf.label)}</h1>
-            <p class="muted">${escapeHtml(fridge.name)} · ${bottles(sumQty(shelf.wines))}</p>
+            <p class="muted">${escapeHtml(fridge.name)} · ${bottles(sumQty(shelf.wines))} · tap a bottle to drink or move it</p>
         </header>
         <div class="fridge-body single">${shelfHtml(shelf, false)}</div>
         ${list.length === 0 ? '<div class="empty-state">This shelf is empty.</div>' : `
@@ -136,7 +133,7 @@ function renderShelf(fridge, shelf) {
                         <div class="wine-title">${escapeHtml(w.name)}</div>
                         <div class="wine-sub">${escapeHtml([w.vintage || 'NV', w.type, w.region].filter(Boolean).join(' · '))}</div>
                     </div>
-                    <span class="count-pill">${w.qty}</span>
+                    <span class="count-pill">${w.quantity}</span>
                 </button>`).join('')}
         </div>`}`;
 }
@@ -180,7 +177,7 @@ export function init({ on }) {
         'open-fridge': ({ fridge }) => go({ fridge, shelf: null }),
         'open-shelf': ({ shelf }) => go({ fridge: view.fridge, shelf }),
         'cellar-back': () => go(view.shelf ? { fridge: view.fridge, shelf: null } : { fridge: null, shelf: null }),
-        'cellar-wine': ({ id }) => emit('wine:show', id),
+        'cellar-wine': ({ id }) => emit('bottle:open', id),
     });
     on('data:changed', render);
     on('cellar:highlight', highlight);

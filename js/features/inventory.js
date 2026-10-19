@@ -2,9 +2,8 @@
 // (vintages, where each bottle is, drink / edit / show in cellar).
 
 import { state, emit } from '../core/state.js';
-import { registerActions, openSheet, closeSheet, showTab, toast } from '../core/ui.js';
+import { registerActions, openSheet, closeSheet, showTab } from '../core/ui.js';
 import { byId, escapeHtml, bottles, uniqueSorted, optionsHtml, bottleSvg, typeKey } from '../core/utils.js';
-import { markConsumed } from '../core/data.js';
 
 const EXTRA_FILTERS = [
     { field: 'country', label: 'Country', all: 'All countries' },
@@ -210,22 +209,10 @@ function showWine({ key }) {
                         <div class="place-actions">
                             <button class="btn btn-small btn-secondary" data-action="show-in-cellar" data-id="${escapeHtml(w.id)}">Find</button>
                             <button class="btn btn-small btn-secondary" data-action="edit-wine" data-id="${escapeHtml(w.id)}">Edit</button>
-                            <button class="btn btn-small btn-primary" data-action="drink-one" data-id="${escapeHtml(w.id)}">Drink 1</button>
+                            <button class="btn btn-small btn-primary" data-action="drink-move" data-id="${escapeHtml(w.id)}">Drink / Move</button>
                         </div>
                     </div>`).join('')}
             </div>`).join('')}`);
-}
-
-function askTastingNotes(wine) {
-    const body = openSheet(`Drink ${wine.name}`, `
-        <p class="muted">${escapeHtml([wine.vintage || 'NV', wine.location].filter(Boolean).join(' · '))}</p>
-        <label for="tastingNotes">Tasting notes (optional)</label>
-        <textarea id="tastingNotes" rows="4" placeholder="How was it?"></textarea>
-        <div class="row-2" style="margin-top:16px">
-            <button class="btn btn-secondary" data-action="show-wine" data-key="${escapeHtml(groupKey(wine))}">Back</button>
-            <button class="btn btn-primary" data-action="confirm-drink" data-id="${escapeHtml(wine.id)}">Mark as drunk</button>
-        </div>`);
-    body.querySelector('textarea').focus();
 }
 
 export function init({ on }) {
@@ -269,25 +256,7 @@ export function init({ on }) {
             showTab('cellar');
             emit('cellar:highlight', [id]);
         },
-        'drink-one': ({ id }) => {
-            const wine = state.wines.find(w => w.id === id);
-            if (wine) askTastingNotes(wine);
-        },
-        'confirm-drink': async ({ id }, button) => {
-            const wine = state.wines.find(w => w.id === id);
-            if (!wine) return;
-            button.disabled = true;
-            try {
-                await markConsumed(id, byId('tastingNotes')?.value || '');
-            } catch (error) {
-                console.error('Error:', error);
-                toast('Could not save: ' + error.message, 'error');
-                button.disabled = false;
-                return;
-            }
-            toast(`🥂 Enjoy! ${wine.name} added to History`);
-            showWine({ key: groupKey(wine) }); // reopens with updated counts, or closes if none left
-        },
+        'drink-move': ({ id }) => emit('bottle:open', id),
     });
 
     on('data:changed', renderWines);
