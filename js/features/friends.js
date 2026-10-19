@@ -4,7 +4,7 @@
 import { supabase } from '../core/supabase.js';
 import { state } from '../core/state.js';
 import { registerActions } from '../core/ui.js';
-import { byId, escapeHtml, bottles } from '../core/utils.js';
+import { byId, escapeHtml, bottleSvg } from '../core/utils.js';
 
 let friends = [];
 let friendRequests = [];
@@ -43,66 +43,65 @@ async function loadFriends() {
     renderRequests();
 }
 
+const emptyRow = text => `<div class="empty-state" style="padding:20px">${text}</div>`;
+
 function renderRequests() {
     const container = byId('friendRequestsList');
     if (friendRequests.length === 0) {
-        container.innerHTML = '<div style="color: #9ca3af; padding: 20px; text-align: center;">No pending requests</div>';
+        container.innerHTML = emptyRow('No pending requests');
         return;
     }
-    container.innerHTML = friendRequests.map(req => `
-        <div style="background: #f9fafb; border: 2px solid #e5e7eb; border-radius: 8px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-            <div><strong>${escapeHtml(otherPerson(req).email)}</strong> wants to connect</div>
-            <div style="display: flex; gap: 8px;">
-                <button data-action="accept-friend" data-id="${escapeHtml(req.id)}" style="width: auto; padding: 8px 16px; background: #10b981; font-size: 14px;">Accept</button>
-                <button data-action="reject-friend" data-id="${escapeHtml(req.id)}" style="width: auto; padding: 8px 16px; background: #ef4444; font-size: 14px;">Reject</button>
-            </div>
-        </div>`).join('');
+    container.innerHTML = `<div class="list-group">${friendRequests.map(req => `
+        <div class="location-row" style="border-top:none">
+            <span><b>${escapeHtml(otherPerson(req).email)}</b> wants to connect</span>
+            <span style="display:flex;gap:6px">
+                <button class="btn btn-small btn-primary" data-action="accept-friend" data-id="${escapeHtml(req.id)}">Accept</button>
+                <button class="btn btn-small btn-secondary" data-action="reject-friend" data-id="${escapeHtml(req.id)}">Decline</button>
+            </span>
+        </div>`).join('')}</div>`;
 }
 
 function renderFriends() {
     const container = byId('friendsList');
     if (friends.length === 0) {
-        container.innerHTML = '<div style="color: #9ca3af; padding: 20px; text-align: center;">No friends yet. Add friends to share your collection!</div>';
+        container.innerHTML = emptyRow('No friends yet. Add one above to see each other’s collections.');
         return;
     }
-    container.innerHTML = friends.map(friendship => {
+    container.innerHTML = `<div class="list-group">${friends.map(friendship => {
         const friend = otherPerson(friendship);
         return `
-            <div style="background: #f9fafb; border: 2px solid #e5e7eb; border-radius: 8px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-                <div style="flex: 1;"><strong>${escapeHtml(friend.email)}</strong></div>
-                <div style="display: flex; gap: 8px;">
-                    <button data-action="view-friend" data-id="${escapeHtml(friend.id)}" data-email="${escapeHtml(friend.email)}" style="width: auto; padding: 8px 16px; background: #667eea; font-size: 14px;">View Collection</button>
-                    <button data-action="remove-friend" data-id="${escapeHtml(friendship.id)}" style="width: auto; padding: 8px 16px; background: #ef4444; font-size: 14px;">Remove</button>
-                </div>
+            <div class="wine-row">
+                <div class="wine-main"><div class="wine-title">${escapeHtml(friend.email)}</div></div>
+                <button class="btn btn-small btn-secondary" data-action="view-friend" data-id="${escapeHtml(friend.id)}" data-email="${escapeHtml(friend.email)}">View</button>
+                <button class="btn btn-small btn-danger" data-action="remove-friend" data-id="${escapeHtml(friendship.id)}" aria-label="Remove friend">✕</button>
             </div>`;
-    }).join('');
+    }).join('')}</div>`;
 }
 
 function renderFriendWines(wines) {
     const container = byId('friendWinesList');
     if (wines.length === 0) {
-        container.innerHTML = '<div style="color: #9ca3af; padding: 20px; text-align: center;">No wines in collection</div>';
+        container.innerHTML = emptyRow('No wines in this collection');
         return;
     }
-    container.innerHTML = wines.map(wine => `
-        <div class="wine-item">
-            ${wine.photo ? `<img src="${escapeHtml(wine.photo)}" style="width: 100%; max-height: 150px; object-fit: cover; border-radius: 6px; margin-bottom: 10px;">` : ''}
-            <div class="wine-name">${escapeHtml(wine.name)}</div>
-            <div class="wine-details">
-                ${wine.vintage ? `${escapeHtml(wine.vintage)} • ` : ''}
-                ${wine.type ? `${escapeHtml(wine.type)} • ` : ''}
-                ${wine.country ? `${escapeHtml(wine.country)} • ` : ''}
-                ${bottles(wine.quantity)}
+    container.innerHTML = `<div class="list-group">${wines.map(wine => `
+        <div class="wine-row">
+            ${wine.photo ? `<img class="wine-thumb" src="${escapeHtml(wine.photo)}" alt="">` : `<div class="wine-thumb">${bottleSvg(wine.type)}</div>`}
+            <div class="wine-main">
+                <div class="wine-title">${escapeHtml(wine.name)}</div>
+                <div class="wine-sub">${escapeHtml([wine.vintage || 'NV', wine.region, wine.country].filter(Boolean).join(' · '))}</div>
+                ${wine.notes ? `<div class="wine-sub">${escapeHtml(wine.notes)}</div>` : ''}
             </div>
-            <span class="location-badge">${escapeHtml(wine.location)}</span>
-            ${wine.notes ? `<div style="margin-top: 10px; font-size: 0.9em; color: #6b7280;">${escapeHtml(wine.notes)}</div>` : ''}
-        </div>`).join('');
+            <span class="count-pill">${wine.quantity}</span>
+        </div>`).join('')}</div>`;
 }
 
 async function viewCollection({ id, email }) {
-    byId('friendCollectionTitle').textContent = `${email}'s Collection`;
-    document.querySelector('#friendsTab > .card').style.display = 'none';
-    byId('friendCollectionView').style.display = 'block';
+    byId('friendCollectionTitle').textContent = email;
+    byId('friendsMain').hidden = true;
+    byId('friendCollectionView').hidden = false;
+    byId('friendWinesList').innerHTML = emptyRow('Loading…');
+    window.scrollTo(0, 0);
 
     const { data: wines, error } = await supabase.from('wines').select('*')
         .eq('user_id', id).order('date_added', { ascending: false });
@@ -110,41 +109,41 @@ async function viewCollection({ id, email }) {
     const { data: consumed } = await supabase.from('consumed_wines').select('*').eq('user_id', id);
 
     const list = wines || [];
-    byId('friendTotalCount').textContent = list.reduce((sum, w) => sum + w.quantity, 0);
+    byId('friendTotalCount').textContent = list.reduce((sum, w) => sum + (w.quantity || 0), 0);
     byId('friendConsumedCount').textContent = (consumed || []).length;
     byId('friendUniqueWines').textContent = new Set(list.map(w => (w.name || '').toLowerCase())).size;
     renderFriendWines(list);
 }
 
 function closeCollection() {
-    document.querySelector('#friendsTab > .card').style.display = 'block';
-    byId('friendCollectionView').style.display = 'none';
+    byId('friendsMain').hidden = false;
+    byId('friendCollectionView').hidden = true;
 }
 
 async function sendRequest() {
     const email = byId('friendEmail').value.trim();
     const result = byId('friendSearchResult');
-    const say = (color, text) => { result.innerHTML = `<div style="color: ${color};">${escapeHtml(text)}</div>`; };
+    const say = (kind, text) => { result.innerHTML = `<div class="notice notice-${kind}">${escapeHtml(text)}</div>`; };
     if (!email) return;
 
     try {
         const { data: profiles } = await supabase.from('user_profiles').select('*').eq('email', email).limit(1);
-        if (!profiles || profiles.length === 0) return say('#991b1b', 'User not found');
+        if (!profiles || profiles.length === 0) return say('error', 'No account with that email');
 
         const friendProfile = profiles[0];
-        if (friendProfile.id === state.user.id) return say('#991b1b', 'You cannot add yourself');
+        if (friendProfile.id === state.user.id) return say('error', 'You can’t add yourself');
 
         const { error } = await supabase.from('friendships').insert([{
             user_id: state.user.id, friend_id: friendProfile.id, status: 'pending',
         }]);
-        if (error?.code === '23505') return say('#78350f', 'Friend request already sent');
+        if (error?.code === '23505') return say('info', 'Request already sent');
         if (error) throw error;
 
-        say('#065f46', '✓ Friend request sent!');
+        say('success', '✓ Request sent');
         byId('friendEmail').value = '';
     } catch (error) {
         console.error('Error sending friend request:', error);
-        say('#991b1b', 'Failed to send request');
+        say('error', 'Could not send the request');
     }
 }
 
@@ -168,6 +167,6 @@ export function init({ on }) {
         'close-friend-collection': closeCollection,
     });
 
-    on('tab:shown', tab => { if (tab === 'friends') return loadFriends(); });
+    on('subpage:shown', page => { if (page === 'friends') { closeCollection(); return loadFriends(); } });
     on('auth:signed-out', () => { friends = []; friendRequests = []; closeCollection(); });
 }

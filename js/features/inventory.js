@@ -1,237 +1,229 @@
-// Wines tab: search, filters, the grouped wine list, and the vintage / detail pop-ups.
+// Wines tab: search, type chips, extra filters, the wine list, and the wine detail sheet
+// (vintages, where each bottle is, drink / edit / show in cellar).
 
 import { state, emit } from '../core/state.js';
-import { registerActions } from '../core/ui.js';
-import { byId, escapeHtml, bottles, uniqueSorted, optionsHtml } from '../core/utils.js';
+import { registerActions, openSheet, closeSheet, showTab, toast } from '../core/ui.js';
+import { byId, escapeHtml, bottles, uniqueSorted, optionsHtml, bottleSvg } from '../core/utils.js';
 import { markConsumed } from '../core/data.js';
 
-const FILTERS = [
-    { id: 'filterCountry', field: 'country', label: 'All Countries' },
-    { id: 'filterRegion', field: 'region', label: 'All Regions' },
-    { id: 'filterSubRegion', field: 'sub_region', label: 'All Sub-regions' },
-    { id: 'filterVintage', field: 'vintage', label: 'All Vintages', newestFirst: true },
+const EXTRA_FILTERS = [
+    { field: 'country', label: 'Country', all: 'All countries' },
+    { field: 'region', label: 'Region', all: 'All regions' },
+    { field: 'sub_region', label: 'Sub-region', all: 'All sub-regions' },
+    { field: 'vintage', label: 'Vintage', all: 'All vintages', newestFirst: true },
 ];
 
+const filters = { type: '', country: '', region: '', sub_region: '', vintage: '' };
+
 const groupKey = w => `${w.name}|${w.region}|${w.type}`;
+const sumQty = list => list.reduce((sum, w) => sum + (w.quantity || 0), 0);
 
-function photoHtml(photo) {
-    return photo
-        ? `<img src="${escapeHtml(photo)}" class="wine-photo">`
-        : '<div class="wine-photo" style="background: #e5e7eb; display: flex; align-items: center; justify-content: center; color: #9ca3af; font-size: 1.5em;">🍷</div>';
-}
-
-function updateFilterDropdowns() {
-    for (const { id, field, label, newestFirst } of FILTERS) {
-        const select = byId(id);
-        const current = select.value;
-        let values = uniqueSorted(state.wines.map(w => w[field] == null ? '' : String(w[field])));
-        if (newestFirst) values = values.reverse();
-        select.innerHTML = `<option value="">${label}</option>` + optionsHtml(values, current);
-    }
+function thumbHtml(wine) {
+    return wine.photo
+        ? `<img class="wine-thumb" src="${escapeHtml(wine.photo)}" alt="">`
+        : `<div class="wine-thumb">${bottleSvg(wine.type)}</div>`;
 }
 
 function filteredWines() {
-    const search = byId('searchBox').value.toLowerCase();
-    const type = byId('filterType').value;
-    let list = [...state.wines];
-
-    if (search) {
-        list = list.filter(w => ['name', 'region', 'sub_region', 'vintage', 'country']
-            .some(f => w[f] != null && String(w[f]).toLowerCase().includes(search)));
-    }
-    if (type) list = list.filter(w => w.type === type);
-    for (const { id, field } of FILTERS) {
-        const value = byId(id).value;
-        if (value) list = list.filter(w => String(w[field] ?? '') === value);
-    }
-    return list;
+    const search = byId('searchBox').value.trim().toLowerCase();
+    return state.wines.filter(w => {
+        if (search && !['name', 'region', 'sub_region', 'vintage', 'country']
+            .some(f => w[f] != null && String(w[f]).toLowerCase().includes(search))) return false;
+        if (filters.type && w.type !== filters.type) return false;
+        return EXTRA_FILTERS.every(({ field }) => !filters[field] || String(w[field] ?? '') === filters[field]);
+    });
 }
 
 function renderWines() {
     const container = byId('wineList');
+    const total = sumQty(state.wines);
+    byId('winesSummary').textContent = state.wines.length ? `${bottles(total)} in your collection` : '';
 
     if (state.wines.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <div style="font-size: 3em; margin-bottom: 10px;">🍾</div>
-                <p>No wines yet. Add your first bottle!</p>
+                <div class="big">🍾</div>
+                <p>No wines yet.</p>
+                <button class="btn btn-primary" data-tab="addWine" style="margin-top:14px">Add your first bottle</button>
             </div>`;
         return;
     }
 
-    updateFilterDropdowns();
-
-    // Group by name + region + type; count vintages within each group
+    // Group by name + region + type
     const groups = new Map();
     for (const wine of filteredWines()) {
         const key = groupKey(wine);
-        if (!groups.has(key)) groups.set(key, { ...wine, key, totalQuantity: 0, vintages: new Set() });
+        if (!groups.has(key)) groups.set(key, { ...wine, key, total: 0, vintages: new Set() });
         const g = groups.get(key);
-        g.totalQuantity += wine.quantity;
+        g.total += wine.quantity || 0;
         g.vintages.add(wine.vintage || 'NV');
     }
 
-    const sorted = [...groups.values()].sort((a, b) =>
-        (a.region || 'No region').toLowerCase().localeCompare((b.region || 'No region').toLowerCase()) ||
-        (a.name || '').toLowerCase().localeCompare((b.name || '').toLowerCase()));
-
-    if (sorted.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <div style="font-size: 2em; margin-bottom: 10px;">🔍</div>
-                <p>No wines match your filters</p>
-            </div>`;
+    if (groups.size === 0) {
+        container.innerHTML = `<div class="empty-state"><div class="big">🔍</div><p>No wines match.</p></div>`;
         return;
     }
 
-    container.innerHTML = sorted.map(g => {
-        const vintageText = g.vintages.size === 1 ? [...g.vintages][0] : `${g.vintages.size} vintages`;
-        const details = [
-            g.region && `<strong>${escapeHtml(g.region)}</strong>`,
-            g.sub_region && escapeHtml(g.sub_region),
-            escapeHtml(vintageText),
-            g.type && escapeHtml(g.type),
-            g.country && escapeHtml(g.country),
-            `<strong>${bottles(g.totalQuantity)}</strong>`,
-        ].filter(Boolean).join(' • ');
+    // Section per region, A–Z
+    const byRegion = new Map();
+    [...groups.values()]
+        .sort((a, b) => (a.region || '~').localeCompare(b.region || '~') || (a.name || '').localeCompare(b.name || ''))
+        .forEach(g => {
+            const region = g.region || 'No region';
+            if (!byRegion.has(region)) byRegion.set(region, []);
+            byRegion.get(region).push(g);
+        });
 
-        return `
-            <div class="wine-item-compact" data-action="show-vintages" data-key="${escapeHtml(g.key)}" style="cursor: pointer;">
-                ${photoHtml(g.photo)}
-                <div class="wine-info">
-                    <div class="wine-name-compact">${escapeHtml(g.name)}</div>
-                    <div class="wine-details-compact">${details}</div>
-                </div>
-                <div class="wine-actions-compact">
-                    <button data-action="show-vintages" data-key="${escapeHtml(g.key)}" style="background: #722f37; padding: 5px 10px; font-size: 0.75em; width: auto;">📅</button>
-                </div>
-            </div>`;
-    }).join('');
+    container.innerHTML = [...byRegion.entries()].map(([region, list]) => `
+        <div class="list-group-title">${escapeHtml(region)}</div>
+        <div class="list-group">
+            ${list.map(g => {
+                const vintageText = g.vintages.size === 1 ? [...g.vintages][0] : `${g.vintages.size} vintages`;
+                const sub = [vintageText, g.sub_region, g.country].filter(Boolean).map(escapeHtml).join(' · ');
+                return `
+                    <button class="wine-row" data-action="show-wine" data-key="${escapeHtml(g.key)}">
+                        ${thumbHtml(g)}
+                        <div class="wine-main">
+                            <div class="wine-title">${escapeHtml(g.name)}</div>
+                            <div class="wine-sub">${sub}</div>
+                        </div>
+                        <span class="count-pill">${g.total}</span>
+                    </button>`;
+            }).join('')}
+        </div>`).join('');
 }
 
-function showVintages({ key }) {
+function updateFiltersChip() {
+    const active = EXTRA_FILTERS.filter(f => filters[f.field]).length;
+    const chip = byId('moreFiltersChip');
+    chip.textContent = active ? `Filters (${active})` : 'Filters';
+    chip.classList.toggle('has-filters', active > 0);
+}
+
+function openFilters() {
+    const body = openSheet('Filters', `
+        ${EXTRA_FILTERS.map(({ field, label, all, newestFirst }) => {
+            let values = uniqueSorted(state.wines.map(w => w[field] == null ? '' : String(w[field])));
+            if (newestFirst) values = values.reverse();
+            return `<label>${label}</label>
+                <select data-filter="${field}"><option value="">${all}</option>${optionsHtml(values, filters[field])}</select>`;
+        }).join('')}
+        <div class="row-2" style="margin-top:20px">
+            <button class="btn btn-secondary" data-action="clear-filters">Clear</button>
+            <button class="btn btn-primary" data-action="close-sheet">Show wines</button>
+        </div>`);
+    body.querySelectorAll('select[data-filter]').forEach(sel => sel.addEventListener('change', () => {
+        filters[sel.dataset.filter] = sel.value;
+        updateFiltersChip();
+        renderWines();
+    }));
+}
+
+// ----- Wine detail sheet -----
+
+function showWine({ key }) {
     const matching = state.wines.filter(w => groupKey(w) === key);
-    if (matching.length === 0) return;
+    if (matching.length === 0) return closeSheet();
+    const first = matching[0];
 
     const byVintage = {};
     for (const wine of matching) (byVintage[wine.vintage || 'NV'] ||= []).push(wine);
+    const vintages = Object.entries(byVintage).sort(([a], [b]) =>
+        a === 'NV' ? 1 : b === 'NV' ? -1 : String(b).localeCompare(String(a)));
 
-    const entries = Object.entries(byVintage).sort(([a], [b]) => {
-        if (a === 'NV') return 1;
-        if (b === 'NV') return -1;
-        return String(b).localeCompare(String(a)); // Most recent first
-    });
+    const tags = [first.type, first.country, first.region, first.sub_region].filter(Boolean)
+        .map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('');
+    const notes = [...new Set(matching.map(w => w.notes).filter(Boolean))];
 
-    byId('vintageWineName').textContent = matching[0].name;
-    byId('vintageDetailContent').innerHTML = entries.map(([vintage, list]) => {
-        const ids = escapeHtml(list.map(w => w.id).join(','));
-        const qty = list.reduce((sum, w) => sum + w.quantity, 0);
-        return `
-            <div style="margin-bottom: 20px; border: 2px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
-                <div data-action="show-wine-detail" data-ids="${ids}" style="background: #f9fafb; padding: 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <div style="font-size: 1.1em; font-weight: 600; color: #722f37;">${vintage === 'NV' ? 'Non-Vintage' : escapeHtml(vintage)}</div>
-                        <div style="color: #6b7280; font-size: 0.9em; margin-top: 4px;">${bottles(qty)} • ${list.length} ${list.length > 1 ? 'locations' : 'location'}</div>
-                    </div>
-                    <button data-action="show-wine-detail" data-ids="${ids}" style="width: auto; padding: 8px 16px; background: #722f37;">View Locations →</button>
-                </div>
-            </div>`;
-    }).join('');
-
-    byId('vintageDetailModal').style.display = 'flex';
+    openSheet(first.name, `
+        ${first.photo ? `<img class="detail-photo" src="${escapeHtml(first.photo)}" alt="">` : ''}
+        <div class="detail-meta">${tags}<span class="tag">${bottles(sumQty(matching))}</span></div>
+        ${notes.map(n => `<p class="detail-notes">${escapeHtml(n)}</p>`).join('')}
+        ${vintages.map(([vintage, list]) => `
+            <div class="vintage-block">
+                <div class="vintage-head"><span>${vintage === 'NV' ? 'Non-vintage' : escapeHtml(vintage)}</span><span>${bottles(sumQty(list))}</span></div>
+                ${list.map(w => `
+                    <div class="place-row">
+                        <div class="place-row-top">
+                            <span>📍 ${escapeHtml(w.location || 'No location')}</span>
+                            <b>${w.quantity}</b>
+                        </div>
+                        <div class="place-actions">
+                            <button class="btn btn-small btn-secondary" data-action="show-in-cellar" data-id="${escapeHtml(w.id)}">Find</button>
+                            <button class="btn btn-small btn-secondary" data-action="edit-wine" data-id="${escapeHtml(w.id)}">Edit</button>
+                            <button class="btn btn-small btn-primary" data-action="drink-one" data-id="${escapeHtml(w.id)}">Drink 1</button>
+                        </div>
+                    </div>`).join('')}
+            </div>`).join('')}`);
 }
 
-function showWineDetail({ ids }) {
-    const idList = ids.split(',');
-    const instances = state.wines.filter(w => idList.includes(w.id));
-    const wine = instances[0];
-    if (!wine) return closeWineDetail();
-
-    const total = instances.reduce((sum, w) => sum + w.quantity, 0);
-    const row = (label, value) => value ? `<p><strong>${label}:</strong> ${escapeHtml(value)}</p>` : '';
-
-    byId('detailWineName').textContent = wine.name;
-    byId('wineDetailContent').innerHTML = `
-        ${wine.photo ? `<img src="${escapeHtml(wine.photo)}" style="width: 100%; max-height: 300px; object-fit: contain; border-radius: 8px; margin-bottom: 20px;">` : ''}
-        <div style="margin-bottom: 20px;">
-            <h4 style="color: #722f37; margin-bottom: 10px;">Wine Details</h4>
-            ${row('Vintage', wine.vintage)}
-            ${row('Type', wine.type)}
-            ${row('Country', wine.country)}
-            ${row('Region', wine.region)}
-            ${row('Sub-region', wine.sub_region)}
-            <p><strong>Total Quantity:</strong> ${bottles(total)}</p>
-            ${row('Notes', wine.notes)}
-        </div>
-        <div style="margin-bottom: 20px;">
-            <h4 style="color: #722f37; margin-bottom: 10px;">Storage Locations</h4>
-            ${instances.map(w => `
-                <div style="background: #f9fafb; padding: 12px; border-radius: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <div style="font-weight: 600;">${escapeHtml(w.location)}</div>
-                        <div style="font-size: 0.9em; color: #6b7280;">${bottles(w.quantity)}</div>
-                    </div>
-                    <div style="display: flex; gap: 6px;">
-                        <button data-action="edit-wine" data-id="${escapeHtml(w.id)}" style="width: auto; padding: 6px 12px; background: #3b82f6; font-size: 0.85em;">Edit</button>
-                        <button data-action="mark-consumed" data-id="${escapeHtml(w.id)}" class="consumed-btn" style="width: auto; padding: 6px 12px; font-size: 0.85em;">Consumed</button>
-                    </div>
-                </div>`).join('')}
-        </div>`;
-
-    byId('wineDetailModal').style.display = 'flex';
-}
-
-function closeVintages() {
-    byId('vintageDetailModal').style.display = 'none';
-}
-
-function closeWineDetail() {
-    byId('wineDetailModal').style.display = 'none';
+function askTastingNotes(wine) {
+    const body = openSheet(`Drink ${wine.name}`, `
+        <p class="muted">${escapeHtml([wine.vintage || 'NV', wine.location].filter(Boolean).join(' · '))}</p>
+        <label for="tastingNotes">Tasting notes (optional)</label>
+        <textarea id="tastingNotes" rows="4" placeholder="How was it?"></textarea>
+        <div class="row-2" style="margin-top:16px">
+            <button class="btn btn-secondary" data-action="show-wine" data-key="${escapeHtml(groupKey(wine))}">Back</button>
+            <button class="btn btn-primary" data-action="confirm-drink" data-id="${escapeHtml(wine.id)}">Mark as drunk</button>
+        </div>`);
+    body.querySelector('textarea').focus();
 }
 
 export function init({ on }) {
-    ['filterType', ...FILTERS.map(f => f.id)].forEach(id => byId(id).addEventListener('change', renderWines));
-
     let searchTimeout;
     byId('searchBox').addEventListener('input', () => {
         clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(renderWines, 300);
+        searchTimeout = setTimeout(renderWines, 200);
     });
 
     registerActions({
-        'show-vintages': showVintages,
-        'show-wine-detail': showWineDetail,
-        'close-vintages': closeVintages,
-        'close-wine-detail': closeWineDetail,
+        'show-wine': showWine,
+        'open-filters': openFilters,
+        'filter-type': ({ type }) => {
+            filters.type = type;
+            document.querySelectorAll('#typeChips [data-action="filter-type"]')
+                .forEach(c => c.classList.toggle('active', c.dataset.type === type));
+            renderWines();
+        },
         'clear-filters': () => {
-            byId('searchBox').value = '';
-            ['filterType', ...FILTERS.map(f => f.id)].forEach(id => { byId(id).value = ''; });
+            EXTRA_FILTERS.forEach(f => { filters[f.field] = ''; });
+            document.querySelectorAll('#sheetBody select[data-filter]').forEach(s => { s.value = ''; });
+            updateFiltersChip();
             renderWines();
         },
         'edit-wine': ({ id }) => {
-            closeWineDetail();
-            closeVintages();
+            closeSheet();
             emit('wine:edit', id);
         },
-        'mark-consumed': async ({ id }) => {
+        'show-in-cellar': ({ id }) => {
+            closeSheet();
+            showTab('cellar');
+            emit('cellar:highlight', [id]);
+        },
+        'drink-one': ({ id }) => {
+            const wine = state.wines.find(w => w.id === id);
+            if (wine) askTastingNotes(wine);
+        },
+        'confirm-drink': async ({ id }, button) => {
             const wine = state.wines.find(w => w.id === id);
             if (!wine) return;
-            const notes = prompt('Tasting notes:', wine.notes || '');
-            if (notes === null) return;
+            button.disabled = true;
             try {
-                await markConsumed(id, notes);
+                await markConsumed(id, byId('tastingNotes')?.value || '');
             } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to mark as consumed: ' + error.message);
+                toast('Could not save: ' + error.message, 'error');
+                button.disabled = false;
                 return;
             }
-            // Refresh the open pop-up so the consumed bottle disappears from it
-            const remaining = state.wines.filter(w => groupKey(w) === groupKey(wine));
-            if (remaining.length) showVintages({ key: groupKey(wine) });
-            else closeVintages();
-            closeWineDetail();
+            toast(`🥂 Enjoy! ${wine.name} added to History`);
+            showWine({ key: groupKey(wine) }); // reopens with updated counts, or closes if none left
         },
     });
 
     on('data:changed', renderWines);
+    on('wine:show', id => {
+        const wine = state.wines.find(w => w.id === id);
+        if (wine) showWine({ key: groupKey(wine) });
+    });
 }

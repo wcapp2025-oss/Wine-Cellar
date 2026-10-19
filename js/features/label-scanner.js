@@ -1,26 +1,41 @@
-// Camera / photo upload on the Add tab, and AI label reading.
-// Puts the photo in state.formPhoto and fills in the form fields it can read.
+// "Scan label" and "Photo" buttons on the Add tab, plus AI label reading.
+// Uses the iPhone's own camera app (via the file input), then fills in what the AI can read.
+// Puts the photo in state.formPhoto for add-wine.js to save.
 
 import { state } from '../core/state.js';
 import { byId } from '../core/utils.js';
 import { AI_PROXY_URL } from '../config.js';
 
-let cameraStream = null;
+const MAX_SIDE = 1600; // shrink big phone photos before upload/saving
 
 function setStatus(text, kind) {
-    const colors = {
-        busy: ['#dbeafe', '#1e40af'],
-        ok: ['#d1fae5', '#065f46'],
-        error: ['#fee2e2', '#991b1b'],
-    }[kind];
     const status = byId('analysisStatus');
-    status.style.display = 'block';
+    status.hidden = false;
     status.textContent = text;
-    [status.style.background, status.style.color] = colors;
+    status.className = `notice notice-${kind}`;
+}
+
+// Phone photos can be 5+ MB; resize to keep saving and AI calls fast.
+function resizeImage(file) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+            const scale = Math.min(1, MAX_SIDE / Math.max(img.width, img.height));
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.round(img.width * scale);
+            canvas.height = Math.round(img.height * scale);
+            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+            URL.revokeObjectURL(url);
+            resolve(canvas.toDataURL('image/jpeg', 0.85));
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Could not read that photo')); };
+        img.src = url;
+    });
 }
 
 async function analyzeLabel(imageData) {
-    setStatus('🤖 Analyzing wine label with AI...', 'busy');
+    setStatus('🤖 Reading the label…', 'info');
     try {
         const response = await fetch(AI_PROXY_URL, {
             method: 'POST',
@@ -36,59 +51,28 @@ async function analyzeLabel(imageData) {
         if (info.country) byId('country').value = info.country;
         if (info.region) byId('region').value = info.region;
 
-        setStatus('✓ Label analyzed successfully! Form fields filled automatically.', 'ok');
+        setStatus('✓ Label read. Check the details below.', 'success');
     } catch (error) {
         console.error('AI analysis error:', error);
-        setStatus('⚠️ AI analysis failed. Please fill in details manually. Error: ' + error.message, 'error');
+        setStatus('Couldn’t read the label. Please fill in the details yourself. (' + error.message + ')', 'error');
     }
 }
 
-function handlePhoto(file) {
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-        state.formPhoto = e.target.result;
-        byId('photoPreview').src = state.formPhoto;
-        byId('photoPreview').style.display = 'block';
-        await analyzeLabel(state.formPhoto);
-    };
-    reader.readAsDataURL(file);
-}
-
-function stopCamera() {
-    if (cameraStream) {
-        cameraStream.getTracks().forEach(track => track.stop());
-        cameraStream = null;
+async function handlePhoto(e) {
+    const file = e.target.files[0];
+    e.target.value = ''; // allow picking the same photo again
+    if (!file) return;
+    try {
+        state.formPhoto = await resizeImage(file);
+    } catch (error) {
+        return setStatus(error.message, 'error');
     }
-    byId('cameraModal').classList.remove('active');
+    byId('photoPreview').src = state.formPhoto;
+    byId('photoPreview').hidden = false;
+    await analyzeLabel(state.formPhoto);
 }
 
 export function init() {
-    byId('openCameraBtn').addEventListener('click', async () => {
-        try {
-            cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-            byId('cameraVideo').srcObject = cameraStream;
-            byId('cameraModal').classList.add('active');
-        } catch (error) {
-            alert('Unable to access camera. Please use file upload instead.');
-        }
-    });
-
-    byId('closeCameraBtn').addEventListener('click', stopCamera);
-
-    byId('captureBtn').addEventListener('click', () => {
-        const video = byId('cameraVideo');
-        const canvas = byId('cameraCanvas');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        canvas.getContext('2d').drawImage(video, 0, 0);
-        canvas.toBlob(blob => {
-            handlePhoto(new File([blob], 'wine-label.jpg', { type: 'image/jpeg' }));
-            stopCamera();
-        }, 'image/jpeg', 0.95);
-    });
-
-    byId('photoUpload').addEventListener('change', e => {
-        const file = e.target.files[0];
-        if (file) handlePhoto(file);
-    });
+    byId('cameraInput').addEventListener('change', handlePhoto);
+    byId('photoUpload').addEventListener('change', handlePhoto);
 }

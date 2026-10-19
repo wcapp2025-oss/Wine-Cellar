@@ -9,21 +9,21 @@ import { PASSWORD_RESET_REDIRECT } from '../config.js';
 const AUTH_FORMS = ['loginForm', 'signupForm', 'forgotPasswordForm', 'newPasswordForm'];
 
 function showAuthForm(id) {
-    AUTH_FORMS.forEach(f => { byId(f).style.display = f === id ? 'block' : 'none'; });
-    byId('authError').style.display = 'none';
-    byId('authSuccess').style.display = 'none';
+    AUTH_FORMS.forEach(f => { byId(f).hidden = f !== id; });
+    byId('authError').hidden = true;
+    byId('authSuccess').hidden = true;
 }
 
 function showMessage(kind, message) {
     const [show, hide] = kind === 'error' ? ['authError', 'authSuccess'] : ['authSuccess', 'authError'];
     byId(show).textContent = message;
-    byId(show).style.display = 'block';
-    byId(hide).style.display = 'none';
+    byId(show).hidden = false;
+    byId(hide).hidden = true;
 }
 
 function showApp(visible) {
-    byId('authModal').style.display = visible ? 'none' : 'flex';
-    byId('mainApp').style.display = visible ? 'block' : 'none';
+    byId('authModal').hidden = visible;
+    byId('mainApp').hidden = !visible;
 }
 
 function signedIn(user) {
@@ -66,6 +66,9 @@ function wireForms() {
         if (error) showMessage('error', error.message);
         else signedIn(data.user);
     });
+
+    // "Go" on the iPhone keyboard signs in
+    byId('loginPassword').addEventListener('keydown', e => { if (e.key === 'Enter') byId('loginBtn').click(); });
 
     byId('signupBtn').addEventListener('click', async () => {
         const email = byId('signupEmail').value;

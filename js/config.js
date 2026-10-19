@@ -11,10 +11,11 @@ export const PASSWORD_RESET_REDIRECT = 'https://wcapp2025-oss.github.io/Wine-Cel
 // Feature switches. Set one to false to hide that feature completely,
 // e.g. while you're rebuilding it. Each one is a file in js/features/.
 export const FEATURES = {
-    dashboard: true,
+    inventory: true,
+    cellar: true,
     'add-wine': true,
     'label-scanner': true,
-    inventory: true,
+    dashboard: true,
     consumed: true,
     locations: true,
     friends: true,

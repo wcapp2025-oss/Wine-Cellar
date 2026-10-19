@@ -24,7 +24,7 @@ export async function loadAll() {
     if (state.locations.length === 0) {
         const stamp = Date.now();
         const defaults = DEFAULT_LOCATIONS.map((name, i) => ({
-            id: `${stamp}-${i}`, name, user_id: userId, is_parent: true,
+            id: String(stamp + i), name, user_id: userId, is_parent: true,
         }));
         const { error } = await supabase.from('locations').insert(defaults);
         if (error) console.error('Could not create default locations:', error);
@@ -63,14 +63,17 @@ export async function deleteWine(id) {
     emit('data:changed');
 }
 
-// Moves a wine to the consumed list. It's only removed from inventory
-// AFTER the consumed record is safely saved, so a failure can't lose the bottle.
+// Records ONE bottle as drunk. If there are more bottles in that spot, the count goes
+// down by one; the entry is only removed when the last bottle is gone.
+// The history record is saved first, so a failure can't lose a bottle.
 export async function markConsumed(id, notes) {
     const wine = state.wines.find(w => w.id === id);
     if (!wine) throw new Error('Wine not found');
 
     const consumed = {
         ...wine,
+        id: Date.now().toString(), // new id, so the same entry can be drunk from more than once
+        quantity: 1,
         consumed_date: new Date().toISOString(),
         consumed_notes: notes,
         consumed_quantity: 1,
@@ -78,8 +81,14 @@ export async function markConsumed(id, notes) {
     check(await supabase.from('consumed_wines').insert([consumed]));
     state.consumedWines.push(consumed);
 
-    check(await supabase.from('wines').delete().eq('id', id));
-    state.wines = state.wines.filter(w => w.id !== id);
+    if ((wine.quantity || 1) > 1) {
+        const quantity = wine.quantity - 1;
+        check(await supabase.from('wines').update({ quantity }).eq('id', id));
+        wine.quantity = quantity;
+    } else {
+        check(await supabase.from('wines').delete().eq('id', id));
+        state.wines = state.wines.filter(w => w.id !== id);
+    }
     emit('data:changed');
 }
 

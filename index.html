@@ -2,494 +2,318 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wine Inventory Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#faf7f5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Wine Cellar">
+    <title>Wine Cellar</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <div class="container" id="mainApp" style="display: none;">
-        <header style="position: relative;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <div>
-                    <h1 style="margin: 0;">🍷 Wine Cellar</h1>
-                    <p class="subtitle" style="margin: 4px 0 0 0;">Track your collection</p>
-                </div>
-                <button data-action="logout" style="width: auto; padding: 8px 16px; background: rgba(255,255,255,0.3); font-size: 14px; white-space: nowrap;">
-                    Logout
-                </button>
+    <!-- ============ SIGN IN ============ -->
+    <div id="authModal" class="auth-screen">
+        <div class="auth-card">
+            <div class="auth-logo">🍷</div>
+            <h1>Wine Cellar</h1>
+            <p class="muted">Your collection, in your pocket</p>
+
+            <div id="loginForm">
+                <label for="loginEmail">Email</label>
+                <input type="email" id="loginEmail" autocomplete="email" required>
+                <label for="loginPassword">Password</label>
+                <input type="password" id="loginPassword" autocomplete="current-password" required>
+                <button id="loginBtn" class="btn btn-primary btn-block">Sign In</button>
+                <p class="auth-links">
+                    <a href="#" id="showForgotPassword">Forgot password?</a>
+                    <span>·</span>
+                    <a href="#" id="showSignup">Create account</a>
+                </p>
             </div>
-        </header>
 
-        <div class="tabs" style="margin-top: 15px;">
-            <button class="tab-btn active" id="dashboardBtn" data-tab="dashboard">🏠 Home</button>
-            <button class="tab-btn" id="addWineBtn" data-tab="addWine">➕ Add</button>
-            <button class="tab-btn" id="inventoryBtn" data-tab="inventory">📦 Wines</button>
-            <button class="tab-btn" id="consumedBtn" data-tab="consumed">🍷 Consumed</button>
-            <button class="tab-btn" id="locationsBtn" data-tab="locations">📍 Locations</button>
-            <button class="tab-btn" id="friendsBtn" data-tab="friends">👥 Friends</button>
+            <div id="signupForm" hidden>
+                <label for="signupEmail">Email</label>
+                <input type="email" id="signupEmail" autocomplete="email" required>
+                <label for="signupPassword">Password</label>
+                <input type="password" id="signupPassword" autocomplete="new-password" minlength="6" required>
+                <label for="signupPasswordConfirm">Confirm password</label>
+                <input type="password" id="signupPasswordConfirm" autocomplete="new-password" minlength="6" required>
+                <button id="signupBtn" class="btn btn-primary btn-block">Create Account</button>
+                <p class="auth-links"><a href="#" id="showLogin">Already have an account? Sign in</a></p>
+            </div>
+
+            <div id="forgotPasswordForm" hidden>
+                <label for="resetEmail">Email</label>
+                <input type="email" id="resetEmail" autocomplete="email" required>
+                <button id="resetPasswordBtn" class="btn btn-primary btn-block">Send Reset Link</button>
+                <p class="auth-links"><a href="#" id="showLoginFromReset">Back to sign in</a></p>
+            </div>
+
+            <div id="newPasswordForm" hidden>
+                <h2>Set a new password</h2>
+                <label for="newPassword">New password</label>
+                <input type="password" id="newPassword" autocomplete="new-password" minlength="6" required>
+                <label for="confirmNewPassword">Confirm password</label>
+                <input type="password" id="confirmNewPassword" autocomplete="new-password" minlength="6" required>
+                <button id="updatePasswordBtn" class="btn btn-primary btn-block">Update Password</button>
+            </div>
+
+            <div id="authError" class="notice notice-error" hidden></div>
+            <div id="authSuccess" class="notice notice-success" hidden></div>
         </div>
+    </div>
 
-        <!-- DASHBOARD TAB -->
-        <div id="dashboardTab" class="tab-content active">
-            <div class="card">
-                <h2 style="color: #722f37; margin-bottom: 20px;">Welcome to Your Wine Cellar</h2>
-                
-                <div class="dashboard-grid">
-                    <div class="dashboard-box" data-tab="inventory">
-                        <div class="dashboard-icon">📦</div>
-                        <div class="dashboard-number" id="dashTotalBottles">0</div>
-                        <div class="dashboard-label">Total Bottles</div>
-                    </div>
+    <!-- ============ APP ============ -->
+    <div id="mainApp" hidden>
 
-                    <div class="dashboard-box" data-tab="consumed">
-                        <div class="dashboard-icon">🍷</div>
-                        <div class="dashboard-number" id="dashConsumedBottles">0</div>
-                        <div class="dashboard-label">Consumed</div>
-                    </div>
-
-                    <div class="dashboard-box" data-tab="locations">
-                        <div class="dashboard-icon">📍</div>
-                        <div class="dashboard-number" id="dashLocations">0</div>
-                        <div class="dashboard-label">Locations</div>
-                    </div>
-
-                    <div class="dashboard-box dashboard-add" data-tab="addWine">
-                        <div class="dashboard-icon">➕</div>
-                        <div class="dashboard-label">Add Wine</div>
-                    </div>
-                </div>
-                
-                <!-- Summary Stats -->
-                <div style="margin-top: 30px;">
-                    <h3 style="color: #722f37; margin-bottom: 16px;">Collection Breakdown</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
-                        <div style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); padding: 16px; border-radius: 8px;">
-                            <div style="font-size: 2em; margin-bottom: 4px; font-weight: 700; color: #991b1b;" id="statRed">0</div>
-                            <div style="color: #7f1d1d; font-weight: 600;">Red Wines</div>
-                        </div>
-                        <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 16px; border-radius: 8px;">
-                            <div style="font-size: 2em; margin-bottom: 4px; font-weight: 700; color: #92400e;" id="statWhite">0</div>
-                            <div style="color: #78350f; font-weight: 600;">White Wines</div>
-                        </div>
-                        <div style="background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%); padding: 16px; border-radius: 8px;">
-                            <div style="font-size: 2em; margin-bottom: 4px; font-weight: 700; color: #9f1239;" id="statRose">0</div>
-                            <div style="color: #831843; font-weight: 600;">Rosé Wines</div>
-                        </div>
-                        <div style="background: linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100%); padding: 16px; border-radius: 8px;">
-                            <div style="font-size: 2em; margin-bottom: 4px; font-weight: 700; color: #5b21b6;" id="statSparkling">0</div>
-                            <div style="color: #4c1d95; font-weight: 600;">Sparkling</div>
-                        </div>
-                    </div>
-                    
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 16px;">
-                        <div style="background: #f9fafb; padding: 16px; border-radius: 8px; border: 2px solid #e5e7eb;">
-                            <div style="font-size: 1.5em; margin-bottom: 4px; font-weight: 700; color: #722f37;" id="statCountries">0</div>
-                            <div style="color: #6b7280; font-weight: 600;">Countries</div>
-                        </div>
-                        <div style="background: #f9fafb; padding: 16px; border-radius: 8px; border: 2px solid #e5e7eb;">
-                            <div style="font-size: 1.5em; margin-bottom: 4px; font-weight: 700; color: #722f37;" id="statRegions">0</div>
-                            <div style="color: #6b7280; font-weight: 600;">Regions</div>
-                        </div>
-                        <div style="background: #f9fafb; padding: 16px; border-radius: 8px; border: 2px solid #e5e7eb;">
-                            <div style="font-size: 1.5em; margin-bottom: 4px; font-weight: 700; color: #722f37;" id="statVintages">0</div>
-                            <div style="color: #6b7280; font-weight: 600;">Vintages</div>
-                        </div>
-                        <div style="background: #f9fafb; padding: 16px; border-radius: 8px; border: 2px solid #e5e7eb;">
-                            <div style="font-size: 1.5em; margin-bottom: 4px; font-weight: 700; color: #722f37;" id="statUniqueWines">0</div>
-                            <div style="color: #6b7280; font-weight: 600;">Unique Wines</div>
-                        </div>
-                    </div>
+        <!-- WINES -->
+        <section id="winesTab" class="tab-content active" data-section="inventory">
+            <header class="page-header">
+                <h1>Wines</h1>
+                <p class="muted" id="winesSummary"></p>
+            </header>
+            <div class="sticky-tools">
+                <input type="search" id="searchBox" placeholder="Search name, region, vintage…" autocomplete="off">
+                <div class="chips" id="typeChips">
+                    <button class="chip active" data-action="filter-type" data-type="">All</button>
+                    <button class="chip" data-action="filter-type" data-type="Red"><i class="dot dot-red"></i>Red</button>
+                    <button class="chip" data-action="filter-type" data-type="White"><i class="dot dot-white"></i>White</button>
+                    <button class="chip" data-action="filter-type" data-type="Rosé"><i class="dot dot-rose"></i>Rosé</button>
+                    <button class="chip" data-action="filter-type" data-type="Sparkling"><i class="dot dot-sparkling"></i>Sparkling</button>
+                    <button class="chip" data-action="open-filters" id="moreFiltersChip">Filters</button>
                 </div>
             </div>
-        </div>
+            <div id="wineList" class="list"></div>
+        </section>
 
-        <!-- ADD WINE TAB -->
-        <div id="addWineTab" class="tab-content">
-            <div class="card">
-                <h2 style="color: #722f37;">Add New Wine</h2>
-                <form id="wineForm">
-                    <div class="form-group">
-                        <label>Wine Label Photo (Auto-analyzes)</label>
-                        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                            <button type="button" id="openCameraBtn" style="width: auto; flex: 1; background: #10b981;">📷 Camera</button>
-                            <label for="photoUpload" style="flex: 1; margin: 0;">
-                                <div style="background: #3b82f6; color: white; padding: 12px 24px; border-radius: 6px; text-align: center; cursor: pointer; font-weight: 600;">
-                                    📁 Upload
-                                </div>
-                            </label>
-                            <input type="file" id="photoUpload" accept="image/*" style="display: none;">
-                        </div>
-                        <img id="photoPreview" style="display: none; width: 100%; max-height: 200px; object-fit: contain; border-radius: 6px; margin-top: 10px;">
-                        <div id="analysisStatus" style="display: none; padding: 10px; background: #dbeafe; border-radius: 6px; margin-top: 10px; color: #1e40af; font-size: 0.9em;"></div>
+        <!-- CELLAR (visual fridges and shelves) -->
+        <section id="cellarTab" class="tab-content" data-section="cellar">
+            <header class="page-header">
+                <h1>Cellar</h1>
+                <p class="muted">Tap a bottle to see what it is</p>
+            </header>
+            <div class="legend">
+                <span><i class="dot dot-red"></i>Red</span>
+                <span><i class="dot dot-white"></i>White</span>
+                <span><i class="dot dot-rose"></i>Rosé</span>
+                <span><i class="dot dot-sparkling"></i>Sparkling</span>
+            </div>
+            <div id="cellarView"></div>
+        </section>
+
+        <!-- ADD / EDIT -->
+        <section id="addWineTab" class="tab-content" data-section="add-wine">
+            <header class="page-header">
+                <h1 id="addWineTitle">Add Wine</h1>
+            </header>
+            <form id="wineForm" class="card form" novalidate>
+                <div class="scan-row" data-section="label-scanner">
+                    <label class="btn btn-scan" for="cameraInput">📷 Scan label</label>
+                    <input type="file" id="cameraInput" accept="image/*" capture="environment" hidden>
+                    <label class="btn btn-secondary" for="photoUpload">🖼️ Photo</label>
+                    <input type="file" id="photoUpload" accept="image/*" hidden>
+                </div>
+                <img id="photoPreview" class="photo-preview" alt="" hidden>
+                <div id="analysisStatus" class="notice" hidden></div>
+
+                <label for="wineName">Wine name *</label>
+                <input type="text" id="wineName" list="wineNameList" required>
+                <datalist id="wineNameList"></datalist>
+
+                <div class="row-2">
+                    <div>
+                        <label for="vintage">Vintage</label>
+                        <input type="number" id="vintage" inputmode="numeric" min="1900" max="2100" placeholder="NV">
                     </div>
-
-                    <div class="form-group">
-                        <label for="wineName">Wine Name *</label>
-                        <input type="text" id="wineName" list="wineNameList" required>
-                        <datalist id="wineNameList"></datalist>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="vintage">Vintage (Year)</label>
-                        <input type="number" id="vintage" min="1900" max="2030">
-                    </div>
-
-                    <div class="form-group">
+                    <div>
                         <label for="wineType">Type</label>
                         <select id="wineType">
-                            <option value="">Select type...</option>
+                            <option value="">—</option>
                             <option value="Red">Red</option>
                             <option value="White">White</option>
                             <option value="Rosé">Rosé</option>
                             <option value="Sparkling">Sparkling</option>
                         </select>
                     </div>
+                </div>
 
-                    <div class="form-group">
-                        <label for="country">Country</label>
-                        <input type="text" id="country" list="countryList" placeholder="e.g., France, Italy, USA">
-                        <datalist id="countryList"></datalist>
-                    </div>
+                <label for="country">Country</label>
+                <input type="text" id="country" list="countryList" placeholder="France, Italy, USA…">
+                <datalist id="countryList"></datalist>
 
-                    <div class="form-group">
+                <div class="row-2">
+                    <div>
                         <label for="region">Region</label>
-                        <input type="text" id="region" list="regionList" placeholder="e.g., Bordeaux, Tuscany, Napa Valley">
+                        <input type="text" id="region" list="regionList" placeholder="Bordeaux">
                         <datalist id="regionList"></datalist>
                     </div>
-
-                    <div class="form-group">
+                    <div>
                         <label for="subRegion">Sub-region</label>
-                        <input type="text" id="subRegion" list="subRegionList" placeholder="e.g., St-Émilion, Pauillac, Chianti Classico">
+                        <input type="text" id="subRegion" list="subRegionList" placeholder="Pauillac">
                         <datalist id="subRegionList"></datalist>
                     </div>
+                </div>
 
-                    <div class="form-group">
-                        <label for="parentLocation">Main Location *</label>
-                        <select id="parentLocation" required>
-                            <option value="">Select main location...</option>
-                        </select>
+                <div class="row-2">
+                    <div>
+                        <label for="parentLocation">Where *</label>
+                        <select id="parentLocation" required></select>
                     </div>
-
-                    <div class="form-group">
-                        <label for="subLocation">Sub-location *</label>
-                        <select id="subLocation" required>
-                            <option value="">Select main location first...</option>
-                        </select>
+                    <div>
+                        <label for="subLocation">Shelf</label>
+                        <select id="subLocation"></select>
                     </div>
+                </div>
 
-                    <div class="form-group">
-                        <label for="quantity">Quantity</label>
-                        <input type="number" id="quantity" min="1" value="1">
+                <label for="quantity">Bottles</label>
+                <div class="stepper">
+                    <button type="button" class="btn btn-secondary" data-action="qty-step" data-step="-1" aria-label="One less">−</button>
+                    <input type="number" id="quantity" inputmode="numeric" min="1" value="1">
+                    <button type="button" class="btn btn-secondary" data-action="qty-step" data-step="1" aria-label="One more">+</button>
+                </div>
+
+                <label for="notes">Notes</label>
+                <textarea id="notes" rows="3"></textarea>
+
+                <div class="form-actions">
+                    <button type="button" id="cancelEditBtn" class="btn btn-secondary" data-action="cancel-edit" hidden>Cancel</button>
+                    <button type="submit" id="submitBtn" class="btn btn-primary">Add to Cellar</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- HISTORY -->
+        <section id="consumedTab" class="tab-content" data-section="consumed">
+            <header class="page-header">
+                <h1>History</h1>
+                <p class="muted">Bottles you've opened</p>
+            </header>
+            <div id="consumedList" class="list"></div>
+        </section>
+
+        <!-- MORE -->
+        <section id="moreTab" class="tab-content">
+            <div class="subpage-menu">
+                <header class="page-header">
+                    <h1>More</h1>
+                </header>
+                <div class="card stats-card" data-section="dashboard">
+                    <div class="stat-grid">
+                        <div><b id="dashTotalBottles">0</b><span>Bottles</span></div>
+                        <div><b id="statUniqueWines">0</b><span>Wines</span></div>
+                        <div><b id="dashConsumedBottles">0</b><span>Opened</span></div>
+                        <div><b id="dashLocations">0</b><span>Locations</span></div>
                     </div>
-
-                    <div class="form-group">
-                        <label for="notes">Notes</label>
-                        <textarea id="notes"></textarea>
+                    <div class="type-bar" id="typeBar"></div>
+                    <div class="stat-row">
+                        <span><b id="statRed">0</b> red</span>
+                        <span><b id="statWhite">0</b> white</span>
+                        <span><b id="statRose">0</b> rosé</span>
+                        <span><b id="statSparkling">0</b> sparkling</span>
                     </div>
+                    <div class="stat-row muted">
+                        <span><b id="statCountries">0</b> countries</span>
+                        <span><b id="statRegions">0</b> regions</span>
+                        <span><b id="statVintages">0</b> vintages</span>
+                    </div>
+                </div>
 
-                    <button type="submit" id="submitBtn">Add to Inventory</button>
+                <div class="menu card">
+                    <button class="menu-row" data-open="locations" data-section="locations">📍 Locations &amp; shelves <span>›</span></button>
+                    <button class="menu-row" data-open="friends" data-section="friends">👥 Friends <span>›</span></button>
+                    <button class="menu-row" data-open="cleanup" data-section="locations">🧹 Clean up data <span>›</span></button>
+                </div>
+                <div class="menu card">
+                    <button class="menu-row menu-danger" data-action="logout">Sign out</button>
+                </div>
+            </div>
+
+            <!-- More › Locations -->
+            <div class="subpage" data-subpage="locations">
+                <button class="back-link" data-close>‹ More</button>
+                <header class="page-header"><h1>Locations</h1></header>
+                <form id="locationForm" class="card form">
+                    <div class="segmented">
+                        <label><input type="radio" name="locationType" value="parent" id="parentLocationRadio" checked><span>Fridge / area</span></label>
+                        <label><input type="radio" name="locationType" value="sub" id="subLocationRadio"><span>Shelf</span></label>
+                    </div>
+                    <div id="parentLocationSelect" hidden>
+                        <label for="parentLocationDropdown">In which fridge / area?</label>
+                        <select id="parentLocationDropdown"></select>
+                    </div>
+                    <label for="locationName">Name</label>
+                    <input type="text" id="locationName" required placeholder="e.g. Wine Fridge or Top Shelf">
+                    <button type="submit" id="locationSubmitBtn" class="btn btn-primary btn-block">Add</button>
                 </form>
+                <p class="hint">Shelves appear in the Cellar view in the order you add them, top to bottom.</p>
+                <div id="locationsList"></div>
             </div>
-        </div>
 
-        <!-- INVENTORY TAB -->
-        <div id="inventoryTab" class="tab-content">
-            <div class="card">
-                <h2 style="color: #722f37; margin-bottom: 20px;">My Wine Collection</h2>
-                
-                <!-- Search Box -->
-                <div style="margin-bottom: 16px;">
-                    <input type="text" id="searchBox" placeholder="🔍 Search wines by name, region, vintage..." 
-                        style="width: 100%; padding: 12px; border: 2px solid #722f37; border-radius: 8px; font-size: 15px;">
+            <!-- More › Friends -->
+            <div class="subpage" data-subpage="friends">
+                <button class="back-link" data-close>‹ More</button>
+                <div id="friendsMain">
+                    <header class="page-header"><h1>Friends</h1></header>
+                    <div class="card form">
+                        <label for="friendEmail">Add a friend by email</label>
+                        <input type="email" id="friendEmail" placeholder="friend@example.com" autocomplete="off">
+                        <button id="sendFriendRequestBtn" class="btn btn-primary btn-block">Send Request</button>
+                        <div id="friendSearchResult"></div>
+                    </div>
+                    <h2 class="section-title">Requests</h2>
+                    <div id="friendRequestsList" class="list"></div>
+                    <h2 class="section-title">My friends</h2>
+                    <div id="friendsList" class="list"></div>
                 </div>
-                
-                <!-- Filters -->
-                <div style="background: #f9fafb; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px;">
-                        <div>
-                            <label style="display: block; font-size: 13px; color: #6b7280; margin-bottom: 4px; font-weight: 500;">Type</label>
-                            <select id="filterType" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
-                                <option value="">All Types</option>
-                                <option value="Red">Red</option>
-                                <option value="White">White</option>
-                                <option value="Rosé">Rosé</option>
-                                <option value="Sparkling">Sparkling</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label style="display: block; font-size: 13px; color: #6b7280; margin-bottom: 4px; font-weight: 500;">Country</label>
-                            <select id="filterCountry" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
-                                <option value="">All Countries</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label style="display: block; font-size: 13px; color: #6b7280; margin-bottom: 4px; font-weight: 500;">Region</label>
-                            <select id="filterRegion" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
-                                <option value="">All Regions</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label style="display: block; font-size: 13px; color: #6b7280; margin-bottom: 4px; font-weight: 500;">Sub-region</label>
-                            <select id="filterSubRegion" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
-                                <option value="">All Sub-regions</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label style="display: block; font-size: 13px; color: #6b7280; margin-bottom: 4px; font-weight: 500;">Vintage</label>
-                            <select id="filterVintage" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
-                                <option value="">All Vintages</option>
-                            </select>
+                <div id="friendCollectionView" hidden>
+                    <button class="back-link" data-action="close-friend-collection">‹ Friends</button>
+                    <header class="page-header"><h1 id="friendCollectionTitle"></h1></header>
+                    <div class="card stats-card">
+                        <div class="stat-grid three">
+                            <div><b id="friendTotalCount">0</b><span>Bottles</span></div>
+                            <div><b id="friendUniqueWines">0</b><span>Wines</span></div>
+                            <div><b id="friendConsumedCount">0</b><span>Opened</span></div>
                         </div>
                     </div>
-                    <button data-action="clear-filters" style="margin-top: 12px; width: auto; padding: 8px 16px; background: #6b7280; font-size: 14px;">Clear Filters</button>
-                </div>
-                
-                <div id="wineList" class="wine-list">
-                    <div class="loading">Loading...</div>
+                    <div id="friendWinesList" class="list"></div>
                 </div>
             </div>
-        </div>
 
-        <!-- Vintage Detail Modal -->
-        <div id="vintageDetailModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; align-items: center; justify-content: center; padding: 20px;">
-            <div style="background: white; border-radius: 12px; max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto; position: relative;">
-                <div style="position: sticky; top: 0; background: white; padding: 20px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center;">
-                    <h3 id="vintageWineName" style="color: #722f37; margin: 0;"></h3>
-                    <button data-action="close-vintages" style="width: auto; padding: 8px 16px; background: #6b7280;">Back</button>
-                </div>
-                <div id="vintageDetailContent" style="padding: 20px;">
-                    <!-- Vintage list will be inserted here -->
-                </div>
-            </div>
-        </div>
-
-        <!-- Wine Detail Modal -->
-        <div id="wineDetailModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; align-items: center; justify-content: center; padding: 20px;">
-            <div style="background: white; border-radius: 12px; max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto; position: relative;">
-                <div style="position: sticky; top: 0; background: white; padding: 20px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center;">
-                    <h3 id="detailWineName" style="color: #722f37; margin: 0;"></h3>
-                    <button data-action="close-wine-detail" style="width: auto; padding: 8px 16px; background: #6b7280;">Close</button>
-                </div>
-                <div id="wineDetailContent" style="padding: 20px;">
-                    <!-- Detail content will be inserted here -->
-                </div>
-            </div>
-        </div>
-
-        <!-- LOCATIONS TAB -->
-        <div id="locationsTab" class="tab-content">
-            <div class="card">
-                <h2>Manage Storage Locations</h2>
-                
-                <form id="locationForm" style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                    <h3 style="color: #667eea; margin-bottom: 15px;">Add Location</h3>
-                    
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-                            <input type="radio" name="locationType" value="parent" id="parentLocationRadio" checked>
-                            <span>Main Location (e.g., Fridge 1, Wine Cellar)</span>
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 8px;">
-                            <input type="radio" name="locationType" value="sub" id="subLocationRadio">
-                            <span>Sub-location (e.g., Top Shelf, Rack A)</span>
-                        </label>
-                    </div>
-
-                    <div id="parentLocationSelect" style="display: none; margin-bottom: 15px;">
-                        <div class="form-group">
-                            <label for="parentLocationDropdown">Parent Location</label>
-                            <select id="parentLocationDropdown"></select>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="locationName">Location Name</label>
-                        <input type="text" id="locationName" required placeholder="e.g., Fridge 1 or Top Shelf">
-                    </div>
-                    <button type="submit" id="locationSubmitBtn">Add Location</button>
-                </form>
-
-                <h3 style="color: #667eea; margin-bottom: 15px;">Current Locations</h3>
-                <div id="locationsList" class="location-list">
-                    <div class="loading">Loading...</div>
-                </div>
-                
-                <!-- Data Cleanup Tool -->
-                <div style="margin-top: 30px; padding-top: 30px; border-top: 2px solid #e5e7eb;">
-                    <h3 style="color: #722f37; margin-bottom: 15px;">🧹 Data Cleanup Tool</h3>
-                    <p style="color: #6b7280; margin-bottom: 15px; font-size: 0.9em;">
-                        Fix duplicate entries caused by extra spaces or inconsistent capitalization
-                    </p>
-                    <button data-action="cleanup-data" style="width: auto; padding: 10px 20px; background: #10b981;">
-                        Clean Up My Data
-                    </button>
-                    <div id="cleanupResult" style="margin-top: 10px;"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- CONSUMED WINES TAB -->
-        <div id="consumedTab" class="tab-content">
-            <div class="card">
-                <h2>🍷 Consumed Wines History</h2>
-                <div id="consumedList" class="wine-list">
-                    <div class="empty-state">
-                        <div style="font-size: 3em; margin-bottom: 10px;">🥂</div>
-                        <p>No consumed wines yet.</p>
-                        <p>Mark a wine as consumed to see it here!</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- FRIENDS TAB -->
-        <div id="friendsTab" class="tab-content">
-            <div class="card" style="margin-bottom: 20px;">
-                <h2>👥 Friends</h2>
-                
-                <!-- Search for friends -->
-                <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                    <h3 style="color: #667eea; margin-bottom: 15px;">Add Friend</h3>
-                    <div class="form-group">
-                        <label for="friendEmail">Search by Email</label>
-                        <input type="email" id="friendEmail" placeholder="friend@example.com">
-                    </div>
-                    <button id="sendFriendRequestBtn" style="width: auto; padding: 10px 20px;">Send Friend Request</button>
-                    <div id="friendSearchResult" style="margin-top: 10px;"></div>
-                </div>
-
-                <!-- Friend Requests -->
-                <div id="friendRequestsSection" style="margin-bottom: 20px;">
-                    <h3 style="color: #667eea; margin-bottom: 15px;">Friend Requests</h3>
-                    <div id="friendRequestsList"></div>
-                </div>
-
-                <!-- Friends List -->
-                <h3 style="color: #667eea; margin-bottom: 15px;">My Friends</h3>
-                <div id="friendsList"></div>
-            </div>
-
-            <!-- View Friend's Collection -->
-            <div id="friendCollectionView" style="display: none;">
-                <button data-action="close-friend-collection" style="margin-bottom: 20px; width: auto; background: #6b7280;">← Back to Friends</button>
+            <!-- More › Clean up -->
+            <div class="subpage" data-subpage="cleanup">
+                <button class="back-link" data-close>‹ More</button>
+                <header class="page-header"><h1>Clean up data</h1></header>
                 <div class="card">
-                    <h2 id="friendCollectionTitle"></h2>
-                    
-                    <div class="stats" style="margin-bottom: 20px;">
-                        <div class="stat-card">
-                            <div class="stat-number" id="friendTotalCount">0</div>
-                            <div class="stat-label">Total Bottles</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number" id="friendConsumedCount">0</div>
-                            <div class="stat-label">Consumed</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number" id="friendUniqueWines">0</div>
-                            <div class="stat-label">Unique Wines</div>
-                        </div>
-                    </div>
-
-                    <h3 style="color: #667eea; margin-bottom: 15px;">Wine Collection</h3>
-                    <div id="friendWinesList" class="wine-list"></div>
+                    <p>Fixes duplicates caused by extra spaces or inconsistent capital letters, and corrects common region spellings (e.g. "st emilion" → "Saint-Émilion").</p>
+                    <button class="btn btn-primary btn-block" data-action="cleanup-data">Clean Up My Data</button>
+                    <div id="cleanupResult"></div>
                 </div>
             </div>
-        </div>
+        </section>
 
+        <!-- BOTTOM TAB BAR -->
+        <nav class="tab-bar">
+            <button class="tab-btn active" data-tab="wines"><span class="tab-icon">🍾</span>Wines</button>
+            <button class="tab-btn" data-tab="cellar"><span class="tab-icon">🗄️</span>Cellar</button>
+            <button class="tab-btn tab-add" data-tab="addWine"><span class="tab-icon">＋</span>Add</button>
+            <button class="tab-btn" data-tab="consumed"><span class="tab-icon">🥂</span>History</button>
+            <button class="tab-btn" data-tab="more"><span class="tab-icon">☰</span>More</button>
+        </nav>
     </div>
 
-    <!-- Auth Modal -->
-    <div id="authModal" style="display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #722f37 0%, #2d1b1e 100%); z-index: 2000; justify-content: center; align-items: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-        <div style="background: #f9fafb; border-radius: 16px; padding: 48px; max-width: 420px; width: 90%; box-shadow: 0 25px 70px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1);">
-            <div style="text-align: center; margin-bottom: 36px;">
-                <div style="font-size: 56px; margin-bottom: 12px;">🍷</div>
-                <h2 style="color: #722f37; margin: 0 0 8px 0; font-size: 28px; font-weight: 700;">Wine Cellar</h2>
-                <p style="color: #6b7280; margin: 0; font-size: 15px;">Curate your collection with elegance</p>
+    <!-- ============ BOTTOM SHEET (wine details, filters, tasting notes) ============ -->
+    <div id="sheet" class="sheet-backdrop" hidden>
+        <div class="sheet" role="dialog" aria-modal="true">
+            <div class="sheet-handle"></div>
+            <div class="sheet-header">
+                <h2 id="sheetTitle"></h2>
+                <button class="sheet-close" data-action="close-sheet" aria-label="Close">✕</button>
             </div>
-            
-            <div id="loginForm">
-                <div class="form-group">
-                    <label for="loginEmail" style="color: #4b5563; font-weight: 500; margin-bottom: 6px; display: block; font-size: 14px;">Email</label>
-                    <input type="email" id="loginEmail" required style="width: 100%; padding: 12px 16px; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 15px; transition: all 0.2s; box-sizing: border-box;" onfocus="this.style.borderColor='#722f37'; this.style.boxShadow='0 0 0 3px rgba(114, 47, 55, 0.1)'" onblur="this.style.borderColor='#d1d5db'; this.style.boxShadow='none'">
-                </div>
-                <div class="form-group">
-                    <label for="loginPassword" style="color: #4b5563; font-weight: 500; margin-bottom: 6px; display: block; font-size: 14px;">Password</label>
-                    <input type="password" id="loginPassword" required style="width: 100%; padding: 12px 16px; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 15px; transition: all 0.2s; box-sizing: border-box;" onfocus="this.style.borderColor='#722f37'; this.style.boxShadow='0 0 0 3px rgba(114, 47, 55, 0.1)'" onblur="this.style.borderColor='#d1d5db'; this.style.boxShadow='none'">
-                </div>
-                <button id="loginBtn" style="width: 100%; margin: 24px 0 12px 0; background: linear-gradient(135deg, #722f37 0%, #8b3a44 100%); color: white; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 12px rgba(114, 47, 55, 0.3);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(114, 47, 55, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(114, 47, 55, 0.3)'">Sign In</button>
-                <p style="text-align: center; color: #6b7280; font-size: 14px; margin: 12px 0;">
-                    <a href="#" id="showForgotPassword" style="color: #722f37; text-decoration: none; font-weight: 500; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">Forgot Password?</a>
-                </p>
-                <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-                    <p style="color: #6b7280; font-size: 14px; margin: 0;">
-                        Don't have an account? <a href="#" id="showSignup" style="color: #722f37; text-decoration: none; font-weight: 600;">Sign Up</a>
-                    </p>
-                </div>
-            </div>
-
-            <div id="signupForm" style="display: none;">
-                <div class="form-group">
-                    <label for="signupEmail" style="color: #4b5563; font-weight: 500; margin-bottom: 6px; display: block; font-size: 14px;">Email</label>
-                    <input type="email" id="signupEmail" required style="width: 100%; padding: 12px 16px; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 15px; transition: all 0.2s; box-sizing: border-box;" onfocus="this.style.borderColor='#722f37'; this.style.boxShadow='0 0 0 3px rgba(114, 47, 55, 0.1)'" onblur="this.style.borderColor='#d1d5db'; this.style.boxShadow='none'">
-                </div>
-                <div class="form-group">
-                    <label for="signupPassword" style="color: #4b5563; font-weight: 500; margin-bottom: 6px; display: block; font-size: 14px;">Password</label>
-                    <input type="password" id="signupPassword" required minlength="6" style="width: 100%; padding: 12px 16px; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 15px; transition: all 0.2s; box-sizing: border-box;" onfocus="this.style.borderColor='#722f37'; this.style.boxShadow='0 0 0 3px rgba(114, 47, 55, 0.1)'" onblur="this.style.borderColor='#d1d5db'; this.style.boxShadow='none'">
-                </div>
-                <div class="form-group">
-                    <label for="signupPasswordConfirm" style="color: #4b5563; font-weight: 500; margin-bottom: 6px; display: block; font-size: 14px;">Confirm Password</label>
-                    <input type="password" id="signupPasswordConfirm" required minlength="6" style="width: 100%; padding: 12px 16px; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 15px; transition: all 0.2s; box-sizing: border-box;" onfocus="this.style.borderColor='#722f37'; this.style.boxShadow='0 0 0 3px rgba(114, 47, 55, 0.1)'" onblur="this.style.borderColor='#d1d5db'; this.style.boxShadow='none'">
-                </div>
-                <button id="signupBtn" style="width: 100%; margin: 24px 0 12px 0; background: linear-gradient(135deg, #722f37 0%, #8b3a44 100%); color: white; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 12px rgba(114, 47, 55, 0.3);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(114, 47, 55, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(114, 47, 55, 0.3)'">Create Account</button>
-                <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-                    <p style="color: #6b7280; font-size: 14px; margin: 0;">
-                        Already have an account? <a href="#" id="showLogin" style="color: #722f37; text-decoration: none; font-weight: 600;">Sign In</a>
-                    </p>
-                </div>
-            </div>
-
-            <div id="forgotPasswordForm" style="display: none;">
-                <div class="form-group">
-                    <label for="resetEmail" style="color: #4b5563; font-weight: 500; margin-bottom: 6px; display: block; font-size: 14px;">Email</label>
-                    <input type="email" id="resetEmail" required style="width: 100%; padding: 12px 16px; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 15px; transition: all 0.2s; box-sizing: border-box;" onfocus="this.style.borderColor='#722f37'; this.style.boxShadow='0 0 0 3px rgba(114, 47, 55, 0.1)'" onblur="this.style.borderColor='#d1d5db'; this.style.boxShadow='none'">
-                </div>
-                <button id="resetPasswordBtn" style="width: 100%; margin: 24px 0 12px 0; background: linear-gradient(135deg, #722f37 0%, #8b3a44 100%); color: white; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 12px rgba(114, 47, 55, 0.3);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(114, 47, 55, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(114, 47, 55, 0.3)'">Send Reset Link</button>
-                <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-                    <p style="color: #6b7280; font-size: 14px; margin: 0;">
-                        Remember your password? <a href="#" id="showLoginFromReset" style="color: #722f37; text-decoration: none; font-weight: 600;">Sign In</a>
-                    </p>
-                </div>
-            </div>
-
-            <div id="newPasswordForm" style="display: none;">
-                <h3 style="color: #722f37; text-align: center; margin-bottom: 24px; font-size: 22px; font-weight: 600;">Set New Password</h3>
-                <div class="form-group">
-                    <label for="newPassword" style="color: #4b5563; font-weight: 500; margin-bottom: 6px; display: block; font-size: 14px;">New Password</label>
-                    <input type="password" id="newPassword" required minlength="6" style="width: 100%; padding: 12px 16px; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 15px; transition: all 0.2s; box-sizing: border-box;" onfocus="this.style.borderColor='#722f37'; this.style.boxShadow='0 0 0 3px rgba(114, 47, 55, 0.1)'" onblur="this.style.borderColor='#d1d5db'; this.style.boxShadow='none'">
-                </div>
-                <div class="form-group">
-                    <label for="confirmNewPassword" style="color: #4b5563; font-weight: 500; margin-bottom: 6px; display: block; font-size: 14px;">Confirm Password</label>
-                    <input type="password" id="confirmNewPassword" required minlength="6" style="width: 100%; padding: 12px 16px; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 15px; transition: all 0.2s; box-sizing: border-box;" onfocus="this.style.borderColor='#722f37'; this.style.boxShadow='0 0 0 3px rgba(114, 47, 55, 0.1)'" onblur="this.style.borderColor='#d1d5db'; this.style.boxShadow='none'">
-                </div>
-                <button id="updatePasswordBtn" style="width: 100%; margin: 24px 0 12px 0; background: linear-gradient(135deg, #722f37 0%, #8b3a44 100%); color: white; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 12px rgba(114, 47, 55, 0.3);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(114, 47, 55, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(114, 47, 55, 0.3)'">Update Password</button>
-            </div>
-
-            <div id="authError" style="display: none; background: #fee2e2; color: #991b1b; padding: 12px 16px; border-radius: 8px; margin-top: 16px; font-size: 14px; border-left: 4px solid #dc2626;"></div>
-            <div id="authSuccess" style="display: none; background: #d1fae5; color: #065f46; padding: 12px 16px; border-radius: 8px; margin-top: 16px; font-size: 14px; border-left: 4px solid #10b981;"></div>
+            <div id="sheetBody" class="sheet-body"></div>
         </div>
     </div>
 
-    <!-- Camera Modal -->
-    <div id="cameraModal" class="camera-modal">
-        <div class="camera-container">
-            <video id="cameraVideo" autoplay playsinline></video>
-            <canvas id="cameraCanvas" style="display: none;"></canvas>
-            <div class="camera-controls">
-                <button id="captureBtn">📸 Capture</button>
-                <button id="closeCameraBtn">✕ Close</button>
-            </div>
-        </div>
-    </div>
+    <div id="toast" class="toast" hidden></div>
 
     <!-- Supabase library (loaded before the app so window.supabase exists) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
