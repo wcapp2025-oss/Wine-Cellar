@@ -172,6 +172,13 @@
                     <button type="button" class="btn btn-secondary" data-action="qty-step" data-step="1" aria-label="One more">+</button>
                 </div>
 
+                <label>Drinking window <span class="muted" style="font-weight:400">(optional, overrides the estimate)</span></label>
+                <div class="row-2" id="windowFields">
+                    <input type="number" id="drinkFrom" inputmode="numeric" min="1900" max="2150" placeholder="From year">
+                    <input type="number" id="drinkTo" inputmode="numeric" min="1900" max="2150" placeholder="To year">
+                </div>
+                <p class="hint" id="windowHint" style="margin:6px 2px 0"></p>
+
                 <label for="notes">Notes</label>
                 <textarea id="notes" rows="3"></textarea>
 
@@ -182,13 +189,22 @@
             </form>
         </section>
 
-        <!-- HISTORY -->
-        <section id="consumedTab" class="tab-content" data-section="consumed">
+        <!-- TONIGHT: food pairing + drinking windows -->
+        <section id="tonightTab" class="tab-content" data-section="tonight">
             <header class="page-header">
-                <h1>History</h1>
-                <p class="muted">Bottles you've opened</p>
+                <h1>Tonight</h1>
+                <p class="muted">What to open, from what you have</p>
             </header>
-            <div id="consumedList" class="list"></div>
+            <form id="pairForm" class="card form" autocomplete="off">
+                <label for="foodInput">What are you eating?</label>
+                <div class="search-row">
+                    <input type="search" id="foodInput" placeholder="e.g. grilled lamb, salmon, Thai curry" enterkeyhint="search">
+                    <button type="submit" class="btn btn-primary">Pair</button>
+                </div>
+                <div class="chips" id="foodChips"></div>
+            </form>
+            <div id="pairResults"></div>
+            <div id="drinkWindows"></div>
         </section>
 
         <!-- MORE -->
@@ -219,6 +235,7 @@
                 </div>
 
                 <div class="menu card">
+                    <button class="menu-row" data-open="history" data-section="consumed">🥂 History <span>›</span></button>
                     <button class="menu-row" data-open="locations" data-section="locations">📍 Locations &amp; shelves <span>›</span></button>
                     <button class="menu-row" data-open="friends" data-section="friends">👥 Friends <span>›</span></button>
                     <button class="menu-row" data-open="cleanup" data-section="locations">🧹 Clean up data <span>›</span></button>
@@ -226,6 +243,16 @@
                 <div class="menu card">
                     <button class="menu-row menu-danger" data-action="logout">Sign out</button>
                 </div>
+            </div>
+
+            <!-- More › History -->
+            <div class="subpage" data-subpage="history">
+                <button class="back-link" data-close>‹ More</button>
+                <header class="page-header">
+                    <h1>History</h1>
+                    <p class="muted">Bottles you've opened</p>
+                </header>
+                <div id="consumedList" class="list"></div>
             </div>
 
             <!-- More › Locations -->
@@ -296,7 +323,7 @@
             <button class="tab-btn active" data-tab="wines"><span class="tab-icon">🍾</span>Wines</button>
             <button class="tab-btn" data-tab="cellar"><span class="tab-icon">🗄️</span>Cellar</button>
             <button class="tab-btn tab-add" data-tab="addWine"><span class="tab-icon">＋</span>Add</button>
-            <button class="tab-btn" data-tab="consumed"><span class="tab-icon">🥂</span>History</button>
+            <button class="tab-btn" data-tab="tonight"><span class="tab-icon">🍽️</span>Tonight</button>
             <button class="tab-btn" data-tab="more"><span class="tab-icon">☰</span>More</button>
         </nav>
     </div>

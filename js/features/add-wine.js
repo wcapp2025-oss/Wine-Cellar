@@ -5,6 +5,7 @@ import { state, emit } from '../core/state.js';
 import { showTab, registerActions, toast } from '../core/ui.js';
 import { byId, escapeHtml, normalizeText, normalizeWineText, uniqueSorted, optionsHtml } from '../core/utils.js';
 import { addWine, updateWine, parentLocations, childLocations } from '../core/data.js';
+import { drinkingWindow } from '../core/wine-knowledge.js';
 
 let editingWineId = null;
 
@@ -33,6 +34,19 @@ function renderDropdowns() {
     byId('subRegionList').innerHTML = optionsHtml(uniqueSorted(wines.map(w => w.sub_region)));
 }
 
+// Shows the estimated window for what's typed so far, and whether own windows can be saved.
+function updateWindowHint() {
+    const canSave = !!state.hasWindowColumns;
+    byId('drinkFrom').disabled = !canSave;
+    byId('drinkTo').disabled = !canSave;
+    const est = drinkingWindow({
+        name: byId('wineName').value, vintage: byId('vintage').value, type: byId('wineType').value,
+        country: byId('country').value, region: byId('region').value, sub_region: byId('subRegion').value,
+    });
+    const estText = est ? `Estimate: ${est.from}–${est.to}` : 'No estimate yet (add a vintage and type)';
+    byId('windowHint').textContent = canSave ? estText : `${estText}. Setting your own window needs a one-time database update.`;
+}
+
 function setEditing(id) {
     editingWineId = id;
     byId('addWineTitle').textContent = id ? 'Edit Wine' : 'Add Wine';
@@ -48,6 +62,7 @@ function resetForm() {
     fillShelves('');
     state.formPhoto = null;
     setEditing(null);
+    updateWindowHint();
 }
 
 function startEditing(id) {
@@ -62,6 +77,9 @@ function startEditing(id) {
     byId('subRegion').value = wine.sub_region || '';
     byId('quantity').value = wine.quantity || 1;
     byId('notes').value = wine.notes || '';
+    byId('drinkFrom').value = wine.drink_from || '';
+    byId('drinkTo').value = wine.drink_to || '';
+    updateWindowHint();
 
     const parentLoc = parentLocations().find(l => l.name === wine.parent_location);
     byId('parentLocation').value = parentLoc?.id || '';
@@ -105,6 +123,10 @@ async function handleSubmit(e) {
             photo: state.formPhoto,
             user_id: state.user.id,
         };
+        if (state.hasWindowColumns) {
+            wineData.drink_from = parseInt(byId('drinkFrom').value) || null;
+            wineData.drink_to = parseInt(byId('drinkTo').value) || null;
+        }
 
         let saved;
         if (isEditing) {
@@ -142,7 +164,11 @@ export function init({ on }) {
         },
     });
 
-    on('data:changed', renderDropdowns);
+    ['wineName', 'vintage', 'wineType', 'country', 'region', 'subRegion'].forEach(id =>
+        byId(id).addEventListener('input', updateWindowHint));
+    updateWindowHint();
+
+    on('data:changed', () => { renderDropdowns(); updateWindowHint(); });
     on('wine:edit', startEditing);
     on('auth:signed-out', resetForm);
 }

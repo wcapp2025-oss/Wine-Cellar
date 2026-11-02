@@ -6,6 +6,8 @@ export const SUPABASE_URL = 'https://xozynrlduiyuqkstyhly.supabase.co';
 export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvenlucmxkdWl5dXFrc3R5aGx5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk5OTY3MjksImV4cCI6MjA4NTU3MjcyOX0.SBvP6E7AZF0c9xFXwQU664n_M1L2xyiA6tafAXRlyRQ';
 
 export const AI_PROXY_URL = 'https://wine-ai-proxy.vercel.app/api/analyze-wine';
+// Pairing and drinking-window advice (proxy/api/wine-advice.js in this repo)
+export const AI_ADVICE_URL = 'https://wine-ai-proxy.vercel.app/api/wine-advice';
 export const PASSWORD_RESET_REDIRECT = 'https://wcapp2025-oss.github.io/Wine-Cellar/';
 
 // Feature switches. Set one to false to hide that feature completely,
@@ -14,6 +16,7 @@ export const FEATURES = {
     inventory: true,
     cellar: true,
     'bottle-actions': true,
+    tonight: true,
     'add-wine': true,
     'label-scanner': true,
     dashboard: true,

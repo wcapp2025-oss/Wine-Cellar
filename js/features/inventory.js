@@ -4,6 +4,9 @@
 import { state, emit } from '../core/state.js';
 import { registerActions, openSheet, closeSheet, showTab } from '../core/ui.js';
 import { byId, escapeHtml, bottles, uniqueSorted, optionsHtml, bottleSvg, typeKey } from '../core/utils.js';
+import { windowBadgeHtml, drinkingWindow } from '../core/wine-knowledge.js';
+import { askAI, wineForAI } from '../core/ai.js';
+import { updateWine } from '../core/data.js';
 
 const EXTRA_FILTERS = [
     { field: 'country', label: 'Country', all: 'All countries' },
@@ -200,6 +203,12 @@ function showWine({ key }) {
         ${vintages.map(([vintage, list]) => `
             <div class="vintage-block">
                 <div class="vintage-head"><span>${vintage === 'NV' ? 'Non-vintage' : escapeHtml(vintage)}</span><span>${bottles(sumQty(list))}</span></div>
+                <div class="place-row" style="border-top:none;padding-bottom:4px">
+                    <div class="window-line">${windowBadgeHtml(list[0], true)}
+                        <button class="link-btn" data-action="ai-window" data-id="${escapeHtml(list[0].id)}">✨ Ask AI</button>
+                    </div>
+                    <div class="ai-window-result" data-for="${escapeHtml(list[0].id)}"></div>
+                </div>
                 ${list.map(w => `
                     <div class="place-row">
                         <div class="place-row-top">
@@ -257,6 +266,38 @@ export function init({ on }) {
             emit('cellar:highlight', [id]);
         },
         'drink-move': ({ id }) => emit('bottle:open', id),
+
+        // AI drinking window for one vintage, with the option to save it as your own window
+        'ai-window': async ({ id }, button) => {
+            const wine = state.wines.find(w => w.id === id);
+            const target = document.querySelector(`.ai-window-result[data-for="${CSS.escape(id)}"]`);
+            if (!wine || !target) return;
+            button.disabled = true;
+            target.innerHTML = '<p class="hint">✨ Thinking…</p>';
+            try {
+                const est = drinkingWindow({ ...wine, drink_from: null, drink_to: null });
+                const r = await askAI('window', { wine: wineForAI(wine, { estimate: est ? `${est.from}-${est.to}` : '' }) });
+                const from = parseInt(r.from) || null, to = parseInt(r.to) || null;
+                target.innerHTML = `
+                    <div class="ai-box" style="margin:6px 0">
+                        <b>✨ ${from && to ? `Best ${from}–${to}` : 'No firm window'}</b>
+                        ${r.note ? `<p class="ai-tip">${escapeHtml(r.note)}</p>` : ''}
+                        ${from && to && state.hasWindowColumns ? `<button class="btn btn-small btn-ai" style="margin-top:8px" data-action="use-ai-window" data-id="${escapeHtml(id)}" data-from="${from}" data-to="${to}">Use this window</button>` : ''}
+                    </div>`;
+            } catch (error) {
+                target.innerHTML = `<div class="notice notice-error">${escapeHtml(error.message)}</div>`;
+            } finally {
+                button.disabled = false;
+            }
+        },
+        'use-ai-window': async ({ id, from, to }) => {
+            const wine = state.wines.find(w => w.id === id);
+            if (!wine) return;
+            // Apply to every entry of this wine + vintage (all locations)
+            const same = state.wines.filter(w => groupKey(w) === groupKey(wine) && (w.vintage || '') === (wine.vintage || ''));
+            for (const w of same) await updateWine(w.id, { drink_from: Number(from), drink_to: Number(to) });
+            showWine({ key: groupKey(wine) });
+        },
     });
 
     on('data:changed', renderWines);

@@ -21,6 +21,10 @@ export async function loadAll() {
     state.locations = check(await supabase.from('locations').select('*')
         .eq('user_id', userId).order('name')) || [];
 
+    // Do the "your own drinking window" columns exist yet? (one-time SQL in Supabase adds them)
+    const probe = await supabase.from('wines').select('drink_from, drink_to').limit(1);
+    state.hasWindowColumns = !probe.error;
+
     if (state.locations.length === 0) {
         const stamp = Date.now();
         const defaults = DEFAULT_LOCATIONS.map((name, i) => ({
@@ -78,6 +82,9 @@ export async function markConsumed(id, notes) {
         consumed_notes: notes,
         consumed_quantity: 1,
     };
+    // History doesn't need the drinking window
+    delete consumed.drink_from;
+    delete consumed.drink_to;
     check(await supabase.from('consumed_wines').insert([consumed]));
     state.consumedWines.push(consumed);
 

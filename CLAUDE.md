@@ -16,6 +16,11 @@ iPhone-first. Bottom tab bar: Wines (`inventory.js`), Cellar (`cellar.js`, the v
 - Colors and sizes are CSS variables at the top of `css/styles.css`. Inputs stay at 16px or larger (iPhone zooms in on smaller ones).
 - Parent locations are fridges/areas; child locations are shelves, drawn top to bottom in creation (id) order.
 
+## Drinking windows, pairing, AI
+- `js/core/wine-knowledge.js`: rule tables for drinking windows (years after vintage, by region/grape) and food → wine-style pairing. A wine's own `drink_from`/`drink_to` columns override the estimate (`state.hasWindowColumns` says whether those columns exist).
+- `js/features/tonight.js`: the Tonight tab. History is a More sub-page.
+- `js/core/ai.js` calls `proxy/api/wine-advice.js` (Vercel project `wine-ai-proxy`, deployed separately from GitHub Pages) with the user's Supabase token; the proxy checks the token before calling Claude.
+
 ## Rules for changes
 - Features must not import other features. They talk through `state` and events (`data:changed`, `tab:shown`, `subpage:shown`, `wine:edit`, `wine:show`, `cellar:highlight`, `auth:signed-in`, `auth:signed-out`).
 - New feature: add `js/features/x.js`, add it to `FEATURES` in config.js and to `FEATURE_TABS` in app.js.

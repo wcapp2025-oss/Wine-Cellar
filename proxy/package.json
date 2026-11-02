@@ -1,0 +1,8 @@
+{
+  "name": "wine-ai-proxy",
+  "version": "1.1.0",
+  "type": "module",
+  "dependencies": {
+    "@anthropic-ai/sdk": "0.137.0"
+  }
+}

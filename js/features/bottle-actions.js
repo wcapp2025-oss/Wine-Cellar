@@ -6,6 +6,7 @@ import { state, emit } from '../core/state.js';
 import { registerActions, openSheet, closeSheet, toast } from '../core/ui.js';
 import { byId, escapeHtml, bottles, bottleSvg } from '../core/utils.js';
 import { markConsumed, moveBottles, parentLocations, childLocations } from '../core/data.js';
+import { windowBadgeHtml } from '../core/wine-knowledge.js';
 
 const byCreation = (a, b) => String(a.id).localeCompare(String(b.id), undefined, { numeric: true });
 const placeName = w => [w.parent_location, w.sub_location].filter(Boolean).join(' › ') || 'No location';
@@ -31,6 +32,7 @@ function open(id) {
                 <div class="wine-sub">${escapeHtml([wine.vintage || 'NV', wine.type, wine.region].filter(Boolean).join(' · '))}</div>
                 <div class="here-place">📍 ${escapeHtml(placeName(wine))}</div>
                 <div class="wine-sub">${bottles(qty)} here</div>
+                <div style="margin-top:4px">${windowBadgeHtml(wine, true)}</div>
             </div>
         </div>
 
