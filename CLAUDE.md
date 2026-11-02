@@ -30,3 +30,5 @@ iPhone-first. Bottom tab bar: Wines (`inventory.js`), Cellar (`cellar.js`, the v
 
 ## Testing locally
 `powershell -ExecutionPolicy Bypass -File tools\serve.ps1`, then open http://localhost:8080. It uses the real Supabase database, so changes made while testing are real.
+
+Demo mode (no sign-in, sample data, fake in-memory database): http://localhost:8080/?demo. It only runs on localhost; the code is in `js/dev/demo.js`.

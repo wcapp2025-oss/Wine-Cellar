@@ -395,6 +395,13 @@ button.shelf:active { background: rgba(255,255,255,.06); }
 .auth-links { text-align: center; margin-top: 16px; font-size: 15px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 .auth-links span { color: var(--muted); }
 
+/* ---------- Demo mode banner (localhost only) ---------- */
+.demo-banner {
+    position: sticky; top: 0; z-index: 60;
+    padding: calc(var(--safe-top) + 4px) 12px 4px;
+    background: #fff1d6; color: #9a5b00; text-align: center; font-size: 12px; font-weight: 700;
+}
+
 /* ---------- Errors from a broken feature ---------- */
 .feature-error {
     background: #fbeaea; color: #8e2a20; border-left: 4px solid var(--danger);

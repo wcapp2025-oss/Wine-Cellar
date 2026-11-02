@@ -69,6 +69,13 @@ async function start() {
     });
     on('auth:signed-out', clearAll);
 
+    // Demo mode for local testing only: http://localhost:8080/?demo (sample data, no sign-in)
+    const isLocal = ['localhost', '127.0.0.1'].includes(location.hostname);
+    if (isLocal && new URLSearchParams(location.search).has('demo')) {
+        const demo = await import('./dev/demo.js');
+        return demo.start();
+    }
+
     await startAuth();
 }
 
