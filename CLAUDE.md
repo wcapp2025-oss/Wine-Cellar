@@ -11,7 +11,7 @@ Static site on GitHub Pages (served from `main`), with Supabase for login and da
 - `js/features/`: one file per feature. Each exports `init({ on })`.
 
 ## UI
-iPhone-first. Bottom tab bar: Wines (`inventory.js`), Cellar (`cellar.js`, the visual fridge/shelf view), Add (`add-wine.js` + `label-scanner.js`), History (`consumed.js`), More (stats in `dashboard.js`, plus sub-pages: Locations and Clean up in `locations.js`, Friends in `friends.js`).
+iPhone-first. Bottom tab bar: Wines (`inventory.js`), Cellar (`cellar.js`, the visual fridge/shelf view), Add (`add-wine.js` + `label-scanner.js`), Tonight (`tonight.js`), More (stats in `dashboard.js`, plus sub-pages: History in `consumed.js`, Locations and Clean up in `locations.js`, Friends in `friends.js`). Drink/Move for one bottle is `bottle-actions.js`.
 - Pop-ups use the shared bottom sheet: `openSheet(title, html)` / `closeSheet()` in `ui.js`. Messages use `toast()`, not `alert()`.
 - Colors and sizes are CSS variables at the top of `css/styles.css`. Inputs stay at 16px or larger (iPhone zooms in on smaller ones).
 - Parent locations are fridges/areas; child locations are shelves, drawn top to bottom in creation (id) order.
