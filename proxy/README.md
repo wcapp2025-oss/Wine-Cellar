@@ -8,5 +8,6 @@ Small server on Vercel (project `wine-ai-proxy`) that holds the Anthropic API ke
 Environment variable on Vercel: `ANTHROPIC_API_KEY`.
 
 ## Deploy
-From this `proxy` folder: `npx vercel --prod` (needs Node.js and `npx vercel login` once).
+From this `proxy` folder: `npx vercel deploy --prod` (needs Node.js and `npx vercel login` once; the folder is already linked to the project).
+No `vercel.json`: Vercel finds the `api/` functions automatically. The old legacy `builds`/`routes` config made extensionless URLs like `/api/analyze-wine` return 404.
 GitHub Pages does not serve this folder; it only matters to Vercel.
