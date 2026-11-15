@@ -67,6 +67,10 @@ export async function deleteWine(id) {
     emit('data:changed');
 }
 
+// Wine details kept in History (consumed_wines). Add a name here only after adding the column there.
+const HISTORY_FIELDS = ['user_id', 'name', 'vintage', 'type', 'country', 'region', 'sub_region',
+    'parent_location', 'sub_location', 'location', 'notes', 'photo', 'date_added'];
+
 // Records ONE bottle as drunk. If there are more bottles in that spot, the count goes
 // down by one; the entry is only removed when the last bottle is gone.
 // The history record is saved first, so a failure can't lose a bottle.
@@ -74,17 +78,18 @@ export async function markConsumed(id, notes) {
     const wine = state.wines.find(w => w.id === id);
     if (!wine) throw new Error('Wine not found');
 
+    // Copy only the columns the history table has. (Copying the whole wine broke as soon as
+    // the wines table gained columns history doesn't have, like updated_at.)
     const consumed = {
-        ...wine,
         id: Date.now().toString(), // new id, so the same entry can be drunk from more than once
         quantity: 1,
         consumed_date: new Date().toISOString(),
         consumed_notes: notes,
         consumed_quantity: 1,
     };
-    // History doesn't need the drinking window
-    delete consumed.drink_from;
-    delete consumed.drink_to;
+    for (const field of HISTORY_FIELDS) {
+        if (wine[field] !== undefined) consumed[field] = wine[field];
+    }
     check(await supabase.from('consumed_wines').insert([consumed]));
     state.consumedWines.push(consumed);
 
